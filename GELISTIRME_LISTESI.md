@@ -398,3 +398,37 @@ Kullanıcı kararı: **A3 (arınma / kesim yasağı koruması) hariç tüm öner
 - [ ] **F2** Personele görev atama, tamamlama ve ajandaya bağlama.
 - [ ] **F3** Tüm listelerde tek tip arama, filtre, Excel/PDF aktarımı ve yazdırma.
 - [x] ~~A3 Arınma / kesim yasağı koruması~~ — **kullanıcı istemedi, uygulanmayacak.**
+
+## 11 Kasım 2026 — Ek öneriler ve yeni talepler (kullanıcı: "hepsini ekleyelim")
+
+### Claude'un önerileri (kabul edildi)
+- [ ] **G1 Şüpheli kayıtları bulma ekranı:** eski hatalardan kalmış olabilecek kayıtları listeler (ör. 30.000.000 kg stok, olağandışı dekar, harf/boşluk farkıyla aynı parsel kodu, aynı küpe). Kullanıcı her kayıt için "Düzelt" veya "Doğru, uyarma" der. Otomatik değişiklik yapılmaz; düzeltmeler işlem geçmişine yazılır.
+- [ ] **G2 Kesim ve satış geliri:** çıkışta karkas kg, karkas randımanı (%), kg fiyatı, toplam bedel, alıcı. A1 parti kâr/zarar raporunun ön koşulu (A1 ile aynı sürümde veya önce).
+- [ ] **G3 Makine, yakıt ve bakım:** traktör/ekipman kartı, mazot alımı ve tüketimi, bakım/tamir/muayene tarihleri; masrafın tarla/padok maliyetine yazılması; bakım günlerinin ajandaya düşmesi.
+- [ ] **G4 Ölüm kaydı ve hayvan sigortası:** ölüm nedeni, veteriner raporu, TARSİM dosya durumu (başvuruldu/ödendi/reddedildi), ölüm oranı raporu.
+- [ ] **G5 Yedek ekranı:** son yedeğin zamanı ve yeri, elle "Şimdi Yedek Al", yönetici onayıyla yedekten geri yükleme (önce mevcut durumun yedeği alınır).
+- [ ] **G6 Kolay güncelleme:** Mac/Windows'ta tek dosyaya çift tıklayarak yeni sürüm: eski programı kapat → yedek al → kur → ekranda "vX kuruldu". Eski sürümün açık kalması sorununu önler.
+- [ ] **G7 Deneme modu:** gerçek veriden ayrı, örnek verili deneme veritabanı; ekranda belirgin "DENEME" etiketi; eğitim için.
+- [ ] **G8 Ekran içi yardım:** her ekranda "?" düğmesi ve kısa Türkçe açıklama.
+
+### Kullanıcının yeni talepleri
+- [ ] **G9 Her çıkışta otomatik yedek.** Mevcut durum (v0.15): program açılırken, düzgün kapanırken ve çalışırken belirli aralıklarla yedek alınıyor. Eklenecek: **kullanıcı "Çıkış Yap" dediğinde** de yedek; pencere/terminal kapatılırken yedek alındığının doğrulanması; yedek başarısızsa ekranda Türkçe uyarı; eski yedeklerin düzenli silinmesi (ör. son 30 gün + her ayın son yedeği) ki disk dolmasın. Elektrik kesintisinde son anın yedeği garanti edilemez.
+- [ ] **G10 Girişte hatalı / olağandışı değer uyarısı** (kaydetmeden önce "Emin misiniz?" veya engel). Örnekler:
+  - tarih gelecekte ya da çok eski; çıkış tarihi giriş tarihinden önce
+  - hayvan tartımı makul aralık dışında (ör. besi < 50 kg veya > 1.200 kg; buzağı > 300 kg); son tartıma göre ani büyük kayıp/artış (günlük artış < −1 veya > 3 kg/gün)
+  - giriş kilosu çıkış kilosundan büyük
+  - dekar, stok miktarı, fiyat, KDV oranı olağandışı (ürünün geçmiş ortalamasından çok farklı birim fiyat)
+  - stok çıkışı mevcut bakiyeden fazla (stok eksiye düşüyor)
+  - aynı gün aynı hayvana ikinci tartım, aynı belgenin tekrar girilmesi
+  - Engel ile uyarı ayrılacak: kesin hatalar engellenir; olağandışı ama mümkün değerler için "Yine de kaydet" seçeneği. Sınırlar ayarlardan değiştirilebilir olacak.
+- [ ] **G11 Diğer bölümlerde anlamsız durum uyarıları** (Ana Sayfa'da "Kontrol edilmesi gerekenler" kutusu + G1 ekranında):
+  - çıkışı yapılmış/ölmüş hayvana yeni tartım, tedavi veya padok değişikliği
+  - padokta kapasiteden fazla hayvan; grubu/padoku olmayan aktif hayvan
+  - uzun süredir tartılmamış aktif hayvan; bitiş tarihi geçmiş ama kapanmamış tedavi
+  - eksiye düşmüş stok; uyarı seviyesinin altındaki ürünler
+  - stoğu olan ama faturası/fiyatı olmayan giriş; toplamı tutmayan fatura; vadesi geçmiş ödeme/tahsilat
+  - hasadı girilmemiş geçmiş sezon; parsel alanından fazla ekim
+  - izin ve mesai çakışması (izindeki personele mesai)
+  - Her uyarı tıklanınca ilgili kayda gider; "Doğru, uyarma" ile kapatılabilir (kim kapattığı kaydedilir).
+
+**Önerilen sıra:** G9, G10 ve G6 → v0.16'ya (güvenlik ve veri doğruluğu). G1, G5, G11 → v0.17. G2 → A1 ile birlikte v0.18. G3, G4, G7, G8 → sonraki sürümler.
