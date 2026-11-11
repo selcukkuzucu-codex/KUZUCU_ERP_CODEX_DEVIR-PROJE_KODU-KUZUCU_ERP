@@ -365,3 +365,36 @@ Mevcut: 26 menü maddesi tek, uzun liste. Öneri (profesyonel ERP'lerdeki gibi a
 - [ ] Menüde arama kutusu (sayfa adını yazarak bulma) — isteğe bağlı.
 - [x] **Kullanıcı onayı (11.11.2026):** Yukarıdaki gruplama aynen uygulanacak.
 - [ ] **Kullanıcı kararı (11.11.2026): "Hesaplar / Cariler" ve "Firmalar / Cariler" tek "Cariler" sayfasında birleşecek.** Firma kartı (ad, vergi no, telefon, adres) ve borç-alacak/ödeme-tahsilat hareketleri aynı sayfada; kasa/banka hesap kartları Muhasebe altında kalır. Eski firma ve hesap kayıtları silinmez, eşleştirme tahminle yapılmaz; yetkiler (`firmalar.*`, hesap yetkileri) korunur ve testle doğrulanır.
+
+## 11 Kasım 2026 — Araştırma önerileri kabul edildi (ayrıntı: `ARASTIRMA_GLOBAL_PROGRAMLAR.md`)
+
+Kullanıcı kararı: **A3 (arınma / kesim yasağı koruması) hariç tüm öneriler eklensin.** Arınma koruması uygulanmayacak; mevcut sağlık kayıtlarındaki eski arınma bilgileri v0.15'teki gibi korunur, yeni engel/uyarı eklenmez.
+
+Önerilen sıra (kullanıcı farklı karar vermedikçe):
+
+### v0.16 (mevcut listeye ek)
+- [ ] **F1** Ana Sayfa gösterge kartları: aktif baş, ortalama günlük artış, yem stoğu kaç gün yeter, bugünkü tedavi/işler, ödenecek/tahsil edilecekler (her kart yetkiye tabi).
+
+### v0.17
+- [ ] **A2** Rasyon ve günlük yemleme: rasyon tarifi ve kg maliyeti, padok bazlı günlük yem ve yemlik okuma, mikser yükleme listesi, stoktan otomatik düşüm, maliyetin padok/partiye yazılması, tarımdan besiye iç transfer (çift sayım yok).
+
+### v0.18
+- [ ] **A1** Parti kapanış raporu: giriş baş/kg/bedel, yem ve ilaç maliyeti, ölüm-hastalık oranı, günlük canlı ağırlık artışı, yem dönüşüm oranı, 1 kg artış maliyeti, baş başı ve parti kâr/zarar.
+- [ ] **D1** Tarla işlemleri günlüğü: ekim, gübre, ilaç, sulama, hasat; girdinin stoktan düşümü; dekar başı maliyet ve verim; münavebe geçmişi.
+
+### Altyapı çalışması
+- [ ] **C1** Güvenli uzaktan erişim (özel ağ), çok kullanıcılı veritabanı (PostgreSQL), otomatik dış yedek ve geri yükleme denemesi.
+- [ ] **C2** Bildirimler (e-posta/SMS/WhatsApp): ajanda, stok alarmı, geciken tedavi.
+
+### Sonraki sürümler
+- [ ] **B1** Tablet/telefon saha ekranı (büyük düğmeler; tartım, tedavi, padok değişikliği). C1'e bağlı.
+- [ ] **B2** Tartı ve elektronik küpe okuyucu dosyalarını içe aktarma (kontrol edip kaydetme).
+- [ ] **B3** DelPro güvenli içe aktarma (önceki listede de var; öncelik yükseltildi).
+- [ ] **D2** Sezon bütçesi ile gerçekleşenin karşılaştırması.
+- [ ] **D3** Parselleri harita üzerinde gösterme.
+- [ ] **E1** e-Fatura / e-Arşiv / e-Müstahsil (GİB entegratörü üzerinden; kontrolsüz otomatik kayıt yok).
+- [ ] **E2** Logo / Mikro / Luca gibi muhasebe programlarına aktarım dosyası.
+- [ ] **E3** TÜRKVET küpe listesi ile aktif hayvanların karşılaştırılması (dosya ile; eksik/fazla küpe listesi).
+- [ ] **F2** Personele görev atama, tamamlama ve ajandaya bağlama.
+- [ ] **F3** Tüm listelerde tek tip arama, filtre, Excel/PDF aktarımı ve yazdırma.
+- [x] ~~A3 Arınma / kesim yasağı koruması~~ — **kullanıcı istemedi, uygulanmayacak.**

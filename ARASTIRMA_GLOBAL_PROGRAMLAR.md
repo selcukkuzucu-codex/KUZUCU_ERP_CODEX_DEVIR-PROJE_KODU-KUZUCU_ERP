@@ -1,7 +1,7 @@
 # KUZUCU ERP — Dünyadaki başarılı programlarla karşılaştırma ve öneriler
 
 **Tarih:** 11 Kasım 2026 · **Temel:** KUZUCU ERP v0.15.0 (+ v0.16 listesindeki talepler)
-**Durum:** Öneri. Kullanıcı hangi maddeleri seçerse `GELISTIRME_LISTESI.md` dosyasına talep olarak taşınır. Hiçbiri henüz kodlanmadı.
+**Durum:** Kullanıcı 11.11.2026'da **A3 hariç tüm önerileri** kabul etti; `GELISTIRME_LISTESI.md` dosyasına taşındı. A3 (arınma koruması) uygulanmayacak. Hiçbiri henüz kodlanmadı.
 
 ## 1. İncelenen programlar ve öne çıkan yönleri
 
