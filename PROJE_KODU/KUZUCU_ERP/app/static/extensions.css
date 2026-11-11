@@ -1,0 +1,42 @@
+.calf-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:12px 0 16px}.calf-kpis>div{border-radius:8px;background:#edf3ed;border:1px solid #dae5d8;padding:12px;color:#3e5d4a}.calf-kpis strong{display:block;margin-top:7px;color:#184e37;font-size:18px}.calf-kpis + .scroll{max-height:650px;overflow:auto}#calfBatchPanel table{font-size:12px}#calfBatchPanel th,#calfBatchPanel td{white-space:nowrap}#calfBatchPanel tfoot{background:#eef4eb;font-weight:700}#calfReportForm label input{max-width:190px}
+@media print{body.print-calves{background:white}body.print-calves header,body.print-calves aside,body.print-calves #reminderBanner,body.print-calves #message,body.print-calves .calf-nonprint,body.print-calves .panel:not(#calfBatchPanel){display:none!important}body.print-calves main{padding:0;max-width:100%}body.print-calves .layout{display:block}body.print-calves #calfBatchPanel{margin:0;padding:0;border:0;box-shadow:none}body.print-calves #calfBatchPanel .scroll{max-height:none;overflow:visible}body.print-calves #calfBatchPanel table{font-size:9px}body.print-calves #calfBatchPanel table th,body.print-calves #calfBatchPanel table td{padding:3px} @page{size:A4 landscape;margin:10mm}}
+
+/* Tablet ve dokunmatik ekran: sayfa sabit kalır, geniş tablolar içeride kayar. */
+.scroll{min-width:0;max-width:100%;-webkit-overflow-scrolling:touch}
+header .brandlogo{flex-shrink:0}
+header>span,.erp-account,.erp-account .erp-user{min-width:0}
+.erp-account{max-width:100%}
+.erp-account .erp-user{overflow-wrap:anywhere}
+form{min-width:0}
+form input,form select,form textarea{max-width:100%}
+@media screen and (max-width:1100px){
+  header{flex-wrap:wrap}
+  header>span{flex:1 1 220px}
+  .erp-account{flex-wrap:wrap}
+  button{min-height:44px}
+  input:not([type=checkbox]):not([type=radio]):not([type=hidden]),select,textarea{font-size:16px;min-height:44px}
+}
+@media screen and (max-width:900px){
+  .layout{display:block}
+  aside{width:100%;max-width:100%;padding:8px;overflow-x:auto;border-right:0;border-bottom:1px solid #dfe4dc;-webkit-overflow-scrolling:touch}
+  nav{display:flex;min-width:max-content;gap:4px}
+  nav button{width:auto;flex-shrink:0}
+  main{width:100%;padding:16px}
+  .erp-account{flex:1 1 100%;margin-left:0;padding-left:84px}
+  .erp-account .erp-user{flex:1 1 160px}
+  .cards{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+  form{align-items:stretch}
+  form:not(#authForm)>label{flex:1 1 170px;min-width:0;max-width:100%}
+  form input,form select,form textarea{width:100%;min-width:0}
+  form input[type=checkbox],form input[type=radio]{width:20px;min-width:20px;flex-shrink:0}
+  #authForm>label{flex:0 0 auto;min-width:0}
+  .auth-card{margin:24px auto;padding:24px}
+  .health-catalog-columns,.document-layout{grid-template-columns:1fr}
+  .permission-table{max-width:100%}
+}
+@media screen and (max-width:480px){
+  header>span{flex-basis:150px}
+  .erp-account{padding-left:0}
+  .panel{padding:14px}
+  .cards{grid-template-columns:1fr}
+}

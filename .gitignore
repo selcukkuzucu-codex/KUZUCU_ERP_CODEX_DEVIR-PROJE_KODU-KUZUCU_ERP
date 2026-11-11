@@ -1,0 +1,13 @@
+# Gerçek işletme verileri ve yerel çıktılar depoya alınmaz
+*.db
+*.db-*
+*.sqlite*
+.env
+.env.*
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+PROJE_KODU/KUZUCU_ERP/data/
+PROJE_KODU/KUZUCU_ERP/reports/

@@ -1,0 +1,19 @@
+KUZUCU ERP v0.14 — Mac / ön test ve geliştirme
+
+1) KUZUCU ERP çalışıyorsa Terminal'de Control+C ile kapatın.
+2) Mevcut Desktop/KUZUCU_ERP klasörünü KUZUCU_ERP_ESKI yapın, SİLMEYİN.
+3) ZIP'i açıp PROJE_KODU içindeki KUZUCU_ERP klasörünü Masaüstüne çıkarın.
+4) Mevcut Mac kayıtlarınız varsa eski ciftlik.db dosyasını yeni klasöre kopyalayın;
+   daha önce eklediğiniz parsel görselleri için eski data/parcel_images klasörünü de taşıyın.
+5) Terminal'de çalıştırın:
+   bash "$HOME/Desktop/KUZUCU_ERP/BASLAT_MAC.command"
+6) Chrome: http://127.0.0.1:8000
+7) Mevcut v0.13 veritabanını taşıdıysanız aynı hesapla giriş yapın.
+   Boş veritabanında ilk yönetici hesabınızı oluşturun.
+
+Ayrıntılar: MAC_GUNCELLEME_V14.md
+Otomatik yedekler: ~/Documents/KUZUCU_ERP_Yedekler
+
+Windows verilerini Mac'e aktarmanız gerekmiyor.
+
+iPad'de Codex ile devam etmek için paket kökündeki IPAD_ILE_DEVAM.md dosyasını okuyun.
