@@ -32,7 +32,7 @@ async function run() {
     report.checks.push('Boş veritabanında ilk yönetici oluşturma ve v0.15 açılışı');
 
     await nav('fields','#parcelEntryForm');
-    await fill('#parcelEntryForm',{ada_no:'101',code:'UI-1',name:'Deneme Tarlası',area_decare:'35.5'});
+    await fill('#parcelEntryForm',{ada_no:'101',code:'UI-1',name:'Deneme Tarlası',area_decare:'35,5'});
     const image=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=32;c.height=32;const p=c.getContext('2d');p.fillStyle='#347844';p.fillRect(0,0,32,32);return c.toDataURL('image/png').split(',')[1]});
     await page.locator('#parcelNewImage').setInputFiles({name:'deneme.png',mimeType:'image/png',buffer:Buffer.from(image,'base64')});
     await page.locator('#parcelNewImagePreview').waitFor({state:'visible'});

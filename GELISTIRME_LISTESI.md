@@ -304,3 +304,20 @@ Kullanıcı ilk mesajının son satırını düzeltti; güncel tam talep aşağ�
 Mevcut v0.14'te dashboard yeni sayımları içermiyor; buzağıda açık süt dönemi alanı yok. Ürün kartında alarm eşiği/uyarı onayı alanları, stok Excel aktarımı, personel veri modeli/işlemleri ve N dönem aralıklı hatırlatma yok. Personel/finans/banka/kasa/cari başlıklarının bazıları yalnız **gelecek** yetki etiketleridir. Fatura altyapısı fiyat/KDV içermeyen kg bazlı alış satırı–kantar mutabakatıyla sınırlı; fotoğraf okuyucu yalnız önizleme yapıyor. Genel hayvan toplu çıkış tarih/neden/hedef/kilo alanları ve API'si mevcut değil. Bunlar yapılmış özellik gibi gösterilmemeli.
 
 Kullanıcının üç yanıtı kaydedildi: **N günde/haftada/ayda bir**, **KDV hariç birim fiyat**, **kayıtlı hayvanlara tartım ekleme**. Diğer bütün eski talepler geçerlidir; bu liste onları silmez. Henüz uygulama kodu değiştirilmedi, yeni paket hazırlanmadı ve gönderim/yayın yapılmadı. Yeni açık **“Son sürümü hazırla”** talimatında kapsam birlikte uygulanıp test edilecek.
+
+## 11 Kasım 2026 — Parsel kayıt hatası: inceleme ve düzeltme (v0.15.0 üzerine)
+
+Temel: depodaki ve kullanıcının yüklediği **v0.15.0** paketi (SHA256 aynı). Yeni sürüm paketi (ZIP) **hazırlanmadı**; ekran sürümü hâlâ v0.15.0. Sonraki paket, kullanıcı "Son sürümü hazırla" dediğinde v0.16.0 olacak.
+
+**Kök neden:** Parsel "Alan (dekar)" kutusu tarayıcının sayı kutusuydu (`type="number"`). Türkçe yazımı anlamıyordu: `12,5` → 125 dekar (virgül siliniyordu), `1.250` → 1,25 dekar. Hata mesajı da çıkmıyordu. Ayrıca `P-1` varken ` P-1 ` veya `p-1` ikinci parsel olarak kaydedilebiliyordu.
+
+- [x] Yeni parsel (görselli/görselsiz) ve Düzenle formunda dekar kutusu Türkçe sayı kutusu oldu; binlik nokta yazarken kendiliğinden konur.
+- [x] Tartımlar ekranındaki "Canlı ağırlık (kg)" kutusunda da aynı sorun vardı; düzeltildi.
+- [x] Parsel kodu kırpılır; büyük/küçük harf, boşluk ve I/İ/ı/i farkı gözetilmeden mükerrer kontrolü (`/api/fields`, `/api/fields/with-image`, düzenleme). Eski mükerrer kayıtlar, kodları değişmeden düzenlenebilir.
+- [x] 3'ten fazla ondalık reddedilir (sessizce yuvarlanmaz). Boş Ada No boş saklanır. Görselli kayıtta boş kod/fazla ondalık artık genel sunucu hatası değil, Türkçe uyarı verir.
+- [x] Bilgi mesajı önceki mesajın zamanlayıcısıyla erken kaybolmuyor. `parcels.js` önbellek anahtarı `?v=015b`.
+- [x] 10 yeni test (`tests/test_parcel_input.py`). Toplam **191 test geçti**, 1 atlandı (Tesseract kurulu değil). Gerçek Chromium ile yeni kayıt/düzenleme/mükerrer/boş/0 denendi; JavaScript hatası 0.
+- [ ] Kullanıcının Mac'inde deneme; eski parsellerin dekarlarının elle gözden geçirilmesi (otomatik düzeltme yapılmaz).
+
+### Ayrı bulgu — tarayıcı test aracı buzağı adımında takılıyor (v0.15'te de var)
+- [ ] `tools/ui_smoke.cjs` parsel, kullanıcı, ajanda, stok adımlarını geçiyor; buzağı adımında takılıyor. Test buzağıyı "dün" giriş tarihiyle kaydetmeye çalışıyor ama kayıt bugünün tarihiyle oluşuyor, sonra aynı gün çıkış "çıkış tarihi giriş tarihinden sonra olmalı" ile reddediliyor. Değiştirilmemiş v0.15.0'da da aynı. Tarih kutusunun doldurulması/taslak geri yüklemesi ya da saat dilimi incelenmeli; kullanıcının gerçek buzağı girişinde tarih değişip değişmediği kontrol edilmeli.
