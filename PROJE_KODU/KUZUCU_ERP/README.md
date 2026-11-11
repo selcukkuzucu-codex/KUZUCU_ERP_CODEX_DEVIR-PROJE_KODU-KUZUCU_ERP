@@ -1,6 +1,6 @@
-# KUZUCU ERP — Pilot v0.15.0
+# KUZUCU ERP — Pilot v0.16.0
 
-Tarım, hayvancılık, stok, fatura/cari ve personel kayıtları için ön test ve geliştirme sürümü. Tüm uygulama metinleri Türkçedir. Güncel kurulum: `MAC_GUNCELLEME_V15.md`, `KURULUM_WINDOWS_TR.md`. Değişiklikler: `SURUM_NOTLARI_V15.md`. Paket kökündeki devir ve doğrulama belgeleriyle birlikte kullanın.
+Tarım, hayvancılık, stok, fatura/cari ve personel kayıtları için ön test ve geliştirme sürümü. Tüm uygulama metinleri Türkçedir. Güncel kurulum: `MAC_GUNCELLEME_V16.md` (Mac), `KURULUM_WINDOWS_TR.md` (Windows); kolay güncelleme `GUNCELLE_MAC.command` / `GUNCELLE_WINDOWS.bat`. Değişiklikler: `SURUM_NOTLARI_V16.md`. Paket kökündeki devir ve doğrulama belgeleriyle birlikte kullanın.
 
 ## Çalıştırma
 
@@ -44,7 +44,7 @@ Gerçek kayıtları kullanmadan ayrı geçici `DATABASE_URL`, `KUZUCU_BACKUP_DIR
 
 ## Önceki sürümlerin tarihçesi
 
-Aşağıdaki notlar tarihîdir; eski sürüm sınırlamalarını güncel v0.15 durumu gibi yorumlamayın.
+Aşağıdaki notlar tarihîdir; eski sürüm sınırlamalarını güncel v0.16 durumu gibi yorumlamayın.
 
 ## Sürüm 0.2: DelPro / Excel için CSV içe aktarma önizlemesi
 

@@ -1,10 +1,18 @@
 # KUZUCU ERP — Codex Proje Devir Notları
 
-**Güncel devir tarihi:** 10.11.2026 (ilk devir: 05.11.2026)  
-**Güncel kaynak sürümü:** v0.15.0; test ve paket durumu `SURUM_DOGRULAMA.md` içinde  
+**Güncel devir tarihi:** 12.11.2026 (ilk devir: 05.11.2026)  
+**Güncel kaynak sürümü:** v0.16.0; test ve paket durumu `SURUM_DOGRULAMA.md` içinde  
 **Proje:** Tek şirketin tarım, besi sığırcılığı ve kendi yem üretimini yönetmek için web ERP.
 
-## Güncel Codex devri — v0.15.0
+## Güncel devir — v0.16.0 (11–12 Kasım 2026, Claude Code)
+
+- Kaynaklar artık GitHub deposunda açık halde: `selcukkuzucu-codex/KUZUCU_ERP_CODEX_DEVIR-PROJE_KODU-KUZUCU_ERP`, dal `claude/nifty-meitner-25xe68`. Depo **herkese açık** görünüyordu; kullanıcıya gizli yapması önerildi. Gerçek veri depoya alınmaz (`.gitignore`).
+- Önce v0.14 sanılarak başlandı; depoda ve kullanıcının yüklediği ZIP'te v0.15.0 bulundu (aynı SHA256). "v0.16" adlı daha önce hazırlanmış bir paket bulunamadı; bu paket v0.16.0 oldu.
+- Kullanıcı **"Mac ve Windows için son sürümü hazırla"** dedi. Uygulananlar `PROJE_KODU/KUZUCU_ERP/SURUM_NOTLARI_V16.md` içinde: parsel dekar/Türkçe sayı ve mükerrer kod düzeltmesi, yeni tema (logo aynı), gruplu menü, Ana Sayfa (eski Genel Bakış) göstergeleri ve kontrol listesi, Stok Girişi'nden yeni ürün, birleşik Cariler + Kasa/Banka, Hayvan Çıkış Raporu (besi + buzağı) ve cümleden tarih anlayan rapor, olağandışı giriş onayı, her Çıkış Yap'ta yedek + saklama kuralı + Yedekler sayfası, kolay güncelleme (`GUNCELLE_MAC.command`, `GUNCELLE_WINDOWS.bat`, `tools/update_install.py`).
+- Kullanıcı kararları: logo değişmeyecek; arınma (kesim yasağı) koruması **eklenmeyecek**; cari sayfaları birleşti; araştırma önerilerinin geri kalanı sıradaki sürümlerde (`GELISTIRME_LISTESI.md`, `ARASTIRMA_GLOBAL_PROGRAMLAR.md`).
+- Önceki "tarayıcı testi buzağı adımında takılıyor" bulgusu program hatası değildi: test tarayıcısı UTC, test Türkiye saatiyle tarih hesaplıyordu. Test Türkiye saatine ayarlandı; personel ve yaş hesapları da Türkiye gününe çevrildi.
+
+## Önceki Codex devri — v0.15.0
 
 - Kullanıcı **Son sürümü hazırla** talimatını verdi ve 10 Kasım'da yineledi. Birikmiş v0.14 sonrası talepler için kod geliştirildi; birleşik doğrulama ve ZIP sonucu `SURUM_DOGRULAMA.md` içindedir. Bu komut sonraki sürümler için sürekli izin sayılmaz.
 - Güncel kurulum `PROJE_KODU/KUZUCU_ERP/MAC_GUNCELLEME_V15.md`, Windows rehberi ve `SURUM_NOTLARI_V15.md` içindedir. Aşağıdaki v0.14/v0.13 anlatımları **tarihî bağlamdır**; güncel v0.15 modül durumu için kaynak ve testleri okuyun.

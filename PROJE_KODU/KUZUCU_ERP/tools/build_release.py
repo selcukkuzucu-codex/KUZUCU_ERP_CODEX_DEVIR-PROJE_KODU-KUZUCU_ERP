@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 import zipfile
 
-RELEASE_TIME = (2026, 11, 10, 0, 0, 0)
+RELEASE_TIME = (2026, 11, 12, 0, 0, 0)
 
 
 def application_version(app_dir):
@@ -48,6 +48,10 @@ def build_package(repo, output):
     logo = app_dir / 'app/static/kuzucu_logo.png'
     if logo.is_file():
         include(logo)
+    # v0.16: programla birlikte gelen Inter yazı tipi (SIL OFL lisansı ile); internetsiz de çalışır.
+    for path in sorted((app_dir / 'app/static/fonts').glob('*')):
+        if path.is_file() and path.suffix.lower() in {'.woff2', '.txt'}:
+            include(path)
     names = {'pytest.ini', 'requirements.txt', 'requirements.constraints.txt', 'YENI_SURUM_KURULUM.txt'}
     for path in sorted(app_dir.iterdir()):
         if path.is_file() and not path.name.startswith('.') and (path.name in names or path.suffix.lower() in {'.md', '.bat', '.command'}):
@@ -56,10 +60,13 @@ def build_package(repo, output):
         if not path.name.startswith('.'):
             include(path)
     metadata = {'version': version, 'stage': 'ön test ve geliştirme',
-                'release_date': '2026-11-10',
+                'release_date': '2026-11-12',
                 'contains_user_database': False, 'contains_business_photos': False,
-                'schema_change': tuple(int(part) for part in version.split('.')[:2]) >= (0, 15),
-                'migration': 'Mevcut SQLite kayıtlarını koruyan eklemeli geçişler; açılış öncesi yedek.',
+                # v0.15 eklemeli tablo/sütun geçişi getirdi; v0.16 yeni tablo/sütun eklemez.
+                'schema_change': tuple(int(part) for part in version.split('.')[:2]) == (0, 15),
+                'migration': ('Mevcut SQLite kayıtlarını koruyan eklemeli geçişler; açılış öncesi yedek.'
+                              if tuple(int(part) for part in version.split('.')[:2]) == (0, 15) else
+                              'Yeni tablo/sütun yok; önceki eklemeli geçişler korunur, açılış öncesi yedek alınır.'),
                 'source_file_count': len(files)}
     files['PAKET_BILGILERI.json'] = (json.dumps(metadata, ensure_ascii=False, indent=2) + '\n').encode()
     manifest = ''.join(f'{hashlib.sha256(data).hexdigest()}  {name}\n' for name, data in sorted(files.items()))

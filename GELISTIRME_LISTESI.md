@@ -320,7 +320,8 @@ Temel: depodaki ve kullanıcının yüklediği **v0.15.0** paketi (SHA256 aynı)
 - [ ] Kullanıcının Mac'inde deneme; eski parsellerin dekarlarının elle gözden geçirilmesi (otomatik düzeltme yapılmaz).
 
 ### Ayrı bulgu — tarayıcı test aracı buzağı adımında takılıyor (v0.15'te de var)
-- [ ] `tools/ui_smoke.cjs` parsel, kullanıcı, ajanda, stok adımlarını geçiyor; buzağı adımında takılıyor. Test buzağıyı "dün" giriş tarihiyle kaydetmeye çalışıyor ama kayıt bugünün tarihiyle oluşuyor, sonra aynı gün çıkış "çıkış tarihi giriş tarihinden sonra olmalı" ile reddediliyor. Değiştirilmemiş v0.15.0'da da aynı. Tarih kutusunun doldurulması/taslak geri yüklemesi ya da saat dilimi incelenmeli; kullanıcının gerçek buzağı girişinde tarih değişip değişmediği kontrol edilmeli.
+- [x] **Çözüldü (v0.16):** program hatası değildi. Test tarayıcısı UTC, test kodu Türkiye saatiyle tarih hesaplıyordu; gece yarısına yakın iki tarih tutmuyordu. Test Türkiye saatine ayarlandı. Ek olarak personel ve yaş hesapları da Türkiye gününe çevrildi.
+- [x] (Eski not) `tools/ui_smoke.cjs` parsel, kullanıcı, ajanda, stok adımlarını geçiyor; buzağı adımında takılıyor. Test buzağıyı "dün" giriş tarihiyle kaydetmeye çalışıyor ama kayıt bugünün tarihiyle oluşuyor, sonra aynı gün çıkış "çıkış tarihi giriş tarihinden sonra olmalı" ile reddediliyor. Değiştirilmemiş v0.15.0'da da aynı. Tarih kutusunun doldurulması/taslak geri yüklemesi ya da saat dilimi incelenmeli; kullanıcının gerçek buzağı girişinde tarih değişip değişmediği kontrol edilmeli.
 
 ## 11 Kasım 2026 — Yeni talepler (v0.16 için; "Son sürümü hazırla" bekleniyor)
 
@@ -448,3 +449,30 @@ Kullanıcı kararı: **A3 (arınma / kesim yasağı koruması) hariç tüm öner
 - [ ] Tablolar: sade başlık, rakamlar sağa yaslı ve hizalı, bölüm etiketleri renkli; dar ekranda tablo kendi kutusunda kayar.
 - [ ] Tablet ve telefonda menü üstte/☰ ile; tüm ekranlar 390 px genişlikte taşmadan çalışır. Tüm ekranlarda erişilebilir renk kontrastı.
 - [ ] Mevcut tüm ekranlar (26 sayfa) yeni temaya geçirilir; işlevler değişmez. Tarayıcı ile her ekranın görüntü kontrolü.
+
+
+## 12 Kasım 2026 — v0.16.0 hazırlandı (kullanıcı: "Mac ve Windows için son sürümü hazırla")
+
+Ayrıntı: `PROJE_KODU/KUZUCU_ERP/SURUM_NOTLARI_V16.md`, test kanıtı: `SURUM_DOGRULAMA.md`.
+
+- [x] Parsel düzeltmeleri (Türkçe dekar, mükerrer kod, Türkçe uyarılar) — 11 Kasım listesi.
+- [x] Stok Girişi'nden "+ Yeni Stok Ürünü" penceresi; ürün seçili gelir, yazılan miktar korunur; mükerrer kod/ad engeli; birimler kg/ton/adet/litre.
+- [x] "Genel Bakış" → "Ana Sayfa"; F1 gösterge kartları, Kontrol edilmesi gerekenler (G11'in ilk bölümü), Bugün yapılacaklar, hızlı işlem düğmeleri.
+- [x] Hayvan Çıkış Raporu sayfası (besi + buzağı, neden/bölüm/tarih, toplamlar, CSV, yazdır); Akıllı Raporlar cümleden tarih anlıyor; "kesilen/ölen/satılan" tanınıyor.
+- [x] Gruplu açılır menü, menüde arama, son yedek bilgisi, tablet/telefonda ☰.
+- [x] "Hesaplar / Cariler" + "Firmalar / Cariler" → tek **Cariler**; ayrı **Kasa / Banka**.
+- [x] Yeni tema (logo aynı), Inter yazı tipi programla birlikte.
+- [x] G9 her Çıkış Yap'ta yedek, saklama kuralı, yedek alınamazsa uyarı; G5'in ilk bölümü: Yönetim → Yedekler (durum + Şimdi Yedek Al).
+- [x] G10 hatalı/olağandışı giriş: kesin hata engeli + onaylanabilir uyarılar (tartım, giriş kilosu, buzağı, parsel alanı, fatura fiyatı/KDV, stok eksiye düşme mesajı).
+- [x] G6 kolay güncelleme: `GUNCELLE_MAC.command`, `GUNCELLE_WINDOWS.bat`, `tools/update_install.py` (tam yedek → kod yenileme → kayıtlar yerinde).
+- [ ] Kullanıcının Mac'inde v0.15 → v0.16 güncelleme denemesi ve ilk kontroller (MAC_GUNCELLEME_V16.md).
+- [ ] Windows bilgisayarda GUNCELLE_WINDOWS.bat denemesi.
+
+### Sıradaki sürüm (v0.17) için kalanlar
+- [ ] A2 Rasyon ve günlük yemleme, mikser yükleme listesi.
+- [ ] G1 Şüpheli kayıtlar ekranı (eski 30.000.000 stok, olağandışı dekar, mükerrer kodlar) — kullanıcı onayıyla düzeltme.
+- [ ] G5 kalan: yönetici onayıyla yedekten geri yükleme ekranı.
+- [ ] G11 kalan: fatura toplam tutarsızlığı, vadesi geçen ödeme, hasadı girilmemiş sezon, izin–mesai çakışması, "Doğru, uyarma" ile kapatma ve kimin kapattığı.
+- [ ] Olağandışı değer sınırlarını (LIMITS) ekrandan ayarlama.
+- [ ] Stok uyarı bandında aynı ürünün iki kez yazılması ("Arpa, Arpa") — küçük görünüm düzeltmesi.
+- Sonrası: A1 + G2 parti kapanış ve kesim geliri (v0.18), D1 tarla günlüğü, C1 altyapı, B/E/F maddeleri, G3, G4, G7, G8 (yukarıdaki listeler).

@@ -1,10 +1,10 @@
-# Codex'te KUZUCU ERP v0.15.0 ile devam etme
+# Codex'te KUZUCU ERP v0.16.0 ile devam etme
 
 1. Aynı Codex hesabında bu sohbete devam ediyorsanız önce mevcut çalışma alanının durumunu kontrol ettirin. Kaynaklar burada zaten varsa eski paketi yeniden uygulamayın.
 2. Yeni bir görevde bu ZIP'i ekleyin. Codex kaynakları **PROJE_KODU/KUZUCU_ERP** altında bulsun; paket kökündeki `KUZUCU_ERP_PROJE_DEVIR_NOTLARI.md`, `GELISTIRME_LISTESI.md` ve `SURUM_DOGRULAMA.md` belgelerini birlikte okusun. iPad için `IPAD_ILE_DEVAM.md` dosyasını izleyin.
 3. Codex'e şu ilk mesajı yaz:
 
-   > KUZUCU ERP v0.15.0 ön test ve geliştirme projesine devam edeceğiz. `AGENTS.md`, `KUZUCU_ERP_PROJE_DEVIR_NOTLARI.md`, `GELISTIRME_LISTESI.md`, `MAC_GUNCELLEME_V15.md` ve `SURUM_DOGRULAMA.md` dosyalarını oku. Önce mevcut kaynakları ve test durumunu kontrol et. Eski değişiklikleri yeniden uygulama. Yeni taleplerimi listele; **ben yeniden “Son sürümü hazırla” demeden yeni sürüm oluşturma.** Hiçbir şey yayımlama. Tüm kullanıcı metinleri sade Türkçe olsun. iPad'de yalnızca Codex üzerinden geliştirmeye devam edeceğim.
+   > KUZUCU ERP v0.16.0 ön test ve geliştirme projesine devam edeceğiz. `AGENTS.md`, `KUZUCU_ERP_PROJE_DEVIR_NOTLARI.md`, `GELISTIRME_LISTESI.md`, `MAC_GUNCELLEME_V16.md` ve `SURUM_DOGRULAMA.md` dosyalarını oku. Önce mevcut kaynakları ve test durumunu kontrol et. Eski değişiklikleri yeniden uygulama. Yeni taleplerimi listele; **ben yeniden “Son sürümü hazırla” demeden yeni sürüm oluşturma.** Hiçbir şey yayımlama. Tüm kullanıcı metinleri sade Türkçe olsun. iPad'de yalnızca Codex üzerinden geliştirmeye devam edeceğim.
 
 4. Kayıtlarınız Mac'te `ciftlik.db` içinde olabilir. Bu aktarım ZIP'ine **özel işletme verilerini koymadık**. Dosyayı güvenli yedeklemeden paylaşmayın; kaynak kod deposuna veya kamuya açık bir yere yüklemeyin.
 

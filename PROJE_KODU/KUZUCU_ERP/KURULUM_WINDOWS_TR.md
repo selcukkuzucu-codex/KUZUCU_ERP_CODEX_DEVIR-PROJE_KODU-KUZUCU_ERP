@@ -1,23 +1,31 @@
-# KUZUCU ERP — Windows yerel pilot v0.15.0
+# KUZUCU ERP — Windows yerel pilot v0.16.0
 
-Ön test ve geliştirme sürümü. Değişiklikler `SURUM_NOTLARI_V15.md` dosyasındadır. Yeni sürüm mevcut SQLite'a alan ve tablolar ekler; geçiş öncesinde kayıtları koruyun.
+Ön test ve geliştirme sürümü. Değişiklikler `SURUM_NOTLARI_V16.md` dosyasındadır. v0.16 veritabanına yeni tablo/sütun eklemez; kayıtlarınız yerinde kalır.
 
-## Güncelleme / ilk açılış
+## Güncelleme — kolay yol (önerilen)
 
 1. Eski programın açık komut penceresinde **Control + C** yapıp kapanmasını bekleyin. Tarayıcıyı kapatmak yeterli değildir.
-2. Mevcut `KUZUCU_ERP` klasörünün tamamını ayrı bir yere kopyalayın. Eski klasörü ve `Belgeler\KUZUCU_ERP_Yedekler` içindeki yedekleri silmeyin.
-3. Yeni ZIP'e sağ tıklayıp **Tümünü Ayıkla** deyin. `PROJE_KODU` içindeki `KUZUCU_ERP` klasörünü örneğin `C:\KUZUCU_ERP` içine alın. Eski klasörle birleştirmeyin; ağ/eşitleme sürücüsünden çalıştırmayın.
-4. Kayıtlarınızı sürdürmek için program kapalıyken eski `ciftlik.db`, `data/parcel_images`, `data/documents` ve `raporlar` klasörlerini yeni klasöre kopyalayın. `.venv` klasörünü kopyalamayın. Özel yol ayarlarınız varsa aynı veritabanı/görsel/belge yollarını koruyun.
-5. Python 3.11–3.13 yoksa https://www.python.org/downloads/windows/ adresinden yükleyin; kurulumdaki Python'ı komut yoluna ekleme seçeneğini işaretleyin.
-6. `BASLAT_WINDOWS.bat` dosyasına çift tıklayın. İlk kurulumda internet gerekir. Gereksinimler, test edilen sürümleri koruyan `requirements.constraints.txt` ile kurulur.
-7. Program hazır olunca tarayıcıda `http://127.0.0.1:8000` açılır. Komut penceresini açık bırakın. Ekranda **v0.15** yazmalıdır; gerekirse **Control + Shift + R** ile yenileyin.
-8. Önceki veritabanını taşıdıysanız mevcut hesabınızla giriş yapın. Boş kurulumda ilk yönetici hesabınızı oluşturun; hazır parola yoktur. Önce kayıt sayıları ve açılış yedeğini kontrol edin.
+2. Yeni ZIP'e sağ tıklayıp **Tümünü Ayıkla** deyin (örneğin İndirilenler'e). Eski `KUZUCU_ERP` klasörüne dokunmayın.
+3. Açılan klasörde `PROJE_KODU\KUZUCU_ERP` içindeki **GUNCELLE_WINDOWS.bat** dosyasına çift tıklayın. "Windows bilgisayarınızı korudu" uyarısında **Ek bilgi → Yine de çalıştır** deyin.
+4. Program eski kurulumu Masaüstünde veya `C:\KUZUCU_ERP` içinde arar. Bulamazsa eski `KUZUCU_ERP` klasörünü pencereye sürükleyip Enter'a basın.
+5. Onay için **E** yazıp Enter'a basın. Güncelleme: eski program açıksa durur; mevcut klasörün **tam yedeğini** `Belgeler\KUZUCU_ERP_Yedekler\surum_oncesi_...` içine alır; yalnız program dosyalarını yeniler (`ciftlik.db`, `data`, `raporlar` yerinde kalır); sonra programı açar.
+6. Ekranda **Pilot v0.16** yazmalıdır; gerekirse **Control + Shift + R** ile yenileyin. Mevcut hesabınızla giriş yapın.
+
+## İlk kurulum veya elle güncelleme
+
+1. Mevcut `KUZUCU_ERP` klasörünüz varsa tamamını ayrı bir yere kopyalayın. Eski klasörü ve `Belgeler\KUZUCU_ERP_Yedekler` içindeki yedekleri silmeyin.
+2. Yeni ZIP'teki `PROJE_KODU` içindeki `KUZUCU_ERP` klasörünü örneğin `C:\KUZUCU_ERP` içine alın. Ağ/eşitleme sürücüsünden çalıştırmayın.
+3. Kayıtlarınızı sürdürmek için program kapalıyken eski `ciftlik.db`, `data` ve `raporlar` klasörlerini yeni klasöre kopyalayın. `.venv` klasörünü kopyalamayın.
+4. Python 3.11–3.13 yoksa https://www.python.org/downloads/windows/ adresinden yükleyin; kurulumdaki Python'ı komut yoluna ekleme seçeneğini işaretleyin.
+5. `BASLAT_WINDOWS.bat` dosyasına çift tıklayın. İlk kurulumda internet gerekir. Gereksinimler, test edilen sürümleri koruyan `requirements.constraints.txt` ile kurulur.
+6. Program hazır olunca tarayıcıda `http://127.0.0.1:8000` açılır. Komut penceresini açık bırakın.
+7. Önceki veritabanını taşıdıysanız mevcut hesabınızla giriş yapın. Boş kurulumda ilk yönetici hesabınızı oluşturun; hazır parola yoktur. Önce kayıt sayılarını ve açılış yedeğini kontrol edin.
 
 8000 bağlantı noktası başka bir uygulamadaysa süreç zorla kapatılmaz. Eski KUZUCU ERP penceresini Control + C ile durdurup tekrar deneyin. Eski klasörünüzü ve yedeğinizi koruyun; yeni verilerin üstüne eski yedek yazmayın.
 
 ## Yedek ve yerel parola kurtarma
 
-`YEDEK_AL_WINDOWS.bat` mevcut SQLite veritabanını `Belgeler\KUZUCU_ERP_Yedekler` içine bütünlüğü kontrol edilerek yedekler. Açılış/kapanış ve program çalışırken dönemsel yedek de vardır. SQLite yedeği **görsel ve belge dosyalarını içermez**; `data` ve `raporlar` klasörlerini ayrıca yedekleyin. Farklı diske yedek kopyalamak ayrıca gerekir.
+Program her **Çıkış Yap**'ta ve 30 dakikada bir de yedek alır; **Yönetim → Yedekler** sayfasında son yedek saati görünür. `YEDEK_AL_WINDOWS.bat` mevcut SQLite veritabanını `Belgeler\KUZUCU_ERP_Yedekler` içine bütünlüğü kontrol edilerek yedekler. Açılış/kapanış ve program çalışırken dönemsel yedek de vardır. SQLite yedeği **görsel ve belge dosyalarını içermez**; `data` ve `raporlar` klasörlerini ayrıca yedekleyin. Farklı diske yedek kopyalamak ayrıca gerekir.
 
 Parolayı unuttuysanız önce doğru kullanıcı adını ve klasörü kontrol edin; şifreyi sohbete yazmayın. Başka bir yönetici parola değiştirebilir. Gerektiğinde program kapalıyken uygulama klasöründeki komut penceresinde şu yerel aracı çalıştırın:
 

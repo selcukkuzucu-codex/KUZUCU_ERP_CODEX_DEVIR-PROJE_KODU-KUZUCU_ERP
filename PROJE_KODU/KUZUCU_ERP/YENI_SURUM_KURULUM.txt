@@ -1,20 +1,22 @@
-KUZUCU ERP v0.15.0 — Ön test ve geliştirme
+KUZUCU ERP v0.16.0 — Ön test ve geliştirme
 
-1) Eski programın Terminal penceresinde Control+C yapıp kapanmasını bekleyin.
-2) Eski KUZUCU_ERP klasörünün tamamını yedekleyin ve koruyun; silmeyin.
-3) ZIP'i açın. PROJE_KODU içindeki KUZUCU_ERP klasörünü Masaüstüne kopyalayın.
-4) Program kapalıyken eski ciftlik.db, data/parcel_images, data/documents ve raporlar
-   klasörlerini yeni klasöre kopyalayın. Eski .venv klasörünü kopyalamayın.
-5) Mac Terminal'de:
-   bash "$HOME/Desktop/KUZUCU_ERP/BASLAT_MAC.command"
-6) Windows'ta BASLAT_WINDOWS.bat dosyasına çift tıklayın.
-7) Program hazır olunca tarayıcıda http://127.0.0.1:8000 açılır; v0.15 yazmalıdır.
-8) Eski veritabanını taşıdıysanız mevcut kullanıcı adı/parolayla giriş yapın.
-   Boş veritabanında ilk yönetici hesabınızı oluşturun. Hazır parola yoktur.
-9) Önce kayıt sayılarını ve yedeğin oluştuğunu kontrol edin.
+KOLAY GÜNCELLEME (eski sürüm kuruluysa)
+1) Eski programın penceresinde Control+C yapıp kapanmasını bekleyin.
+2) ZIP'i açın. PROJE_KODU/KUZUCU_ERP klasörüne girin.
+3) Mac: GUNCELLE_MAC.command dosyasına sağ tıklayıp Aç deyin.
+   Windows: GUNCELLE_WINDOWS.bat dosyasına çift tıklayın.
+4) E yazıp Enter'a basın. Önce tam yedek alınır, sonra program dosyaları yenilenir.
+   ciftlik.db, data ve raporlar yerinde kalır. Program kendiliğinden açılır.
+5) Ekranda "Pilot v0.16" yazmalıdır. Aynı kullanıcı adı/parolayla giriş yapın.
 
-Ayrıntılar: MAC_GUNCELLEME_V15.md ve KURULUM_WINDOWS_TR.md
-Değişiklikler: SURUM_NOTLARI_V15.md
+İLK KURULUM
+- Mac: KUZUCU_ERP klasörünü Masaüstüne kopyalayın, Terminal'de:
+  bash "$HOME/Desktop/KUZUCU_ERP/BASLAT_MAC.command"
+- Windows: KUZUCU_ERP klasörünü C:\KUZUCU_ERP içine alın, BASLAT_WINDOWS.bat'a çift tıklayın.
+- Boş veritabanında ilk yönetici hesabınızı oluşturun. Hazır parola yoktur.
+
+Ayrıntılar: MAC_GUNCELLEME_V16.md ve KURULUM_WINDOWS_TR.md
+Değişiklikler: SURUM_NOTLARI_V16.md
 Otomatik SQLite yedekleri: Belgeler/KUZUCU_ERP_Yedekler
 SQLite yedeği görsel ve belge dosyalarını kapsamaz; data klasörünü ayrıca yedekleyin.
 

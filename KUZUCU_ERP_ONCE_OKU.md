@@ -1,9 +1,9 @@
-# KUZUCU ERP v0.15.0 — önce burayı okuyun
+# KUZUCU ERP v0.16.0 — önce burayı okuyun
 
-10 Kasım 2026. Bu paket ön test ve geliştirme sürümüdür; kaynakları, testleri ve Codex devir belgelerini içerir. Gerçek işletme veritabanı, şifre veya fotoğraf arşivi içermez.
+12 Kasım 2026. Bu paket ön test ve geliştirme sürümüdür; kaynakları, testleri ve devir belgelerini içerir. Gerçek işletme veritabanı, şifre veya fotoğraf arşivi içermez.
 
-1. ZIP'i açın. Program `PROJE_KODU/KUZUCU_ERP` klasöründedir. Mac güncellemesi için bu klasördeki **MAC_GUNCELLEME_V15.md**, Windows için **KURULUM_WINDOWS_TR.md** dosyasını okuyun.
-2. Önce eski programı kapatın ve bütün klasörü yedekleyin. `ciftlik.db`, `data/parcel_images`, `data/documents` ve `raporlar` ayrıca korunmalıdır. Yeni sürüm eski SQLite'a alan ve tablo ekler; eski klasöre dosyaları birleştirmeyin.
-3. Değişiklikler **SURUM_NOTLARI_V15.md**, gerçek test kanıtı kökteki **SURUM_DOGRULAMA.md** içindedir. Fiziksel cihaz kabulü ve üretim kurulumu ayrı işlerdir.
-4. Codex'te geliştirmeyi sürdürmek için **CODEXTE_BASLAT.md** ve **IPAD_ILE_DEVAM.md** dosyalarını kullanın. Mevcut kaynaklar varsa eski paketi yeniden uygulamayın.
-5. Bu paketi indirmek veya çalıştırmak ERP'yi/Codex ortamını internete yayımlamaz. Telefonun Mac'e erişimi kurulmaz; fotoğraf okuma için bilgisayarda Tesseract gerekir.
+1. ZIP'i açın. Program `PROJE_KODU/KUZUCU_ERP` klasöründedir.
+2. **Eski sürüm kuruluysa:** eski programı kapatın (Control + C), sonra bu klasördeki **GUNCELLE_MAC.command** (Mac, sağ tık → Aç) veya **GUNCELLE_WINDOWS.bat** (Windows, çift tık) dosyasını çalıştırın. Güncelleme önce eski klasörün tam yedeğini alır; `ciftlik.db`, `data` ve `raporlar` yerinde kalır. Adım adım anlatım: **MAC_GUNCELLEME_V16.md**, **KURULUM_WINDOWS_TR.md**.
+3. Değişiklikler **SURUM_NOTLARI_V16.md**, test kanıtı kökteki **SURUM_DOGRULAMA.md** içindedir. Fiziksel Mac/Windows kabulü sizin bilgisayarınızda yapılmalıdır.
+4. Sonraki sürümlerin planı **GELISTIRME_LISTESI.md** ve **ARASTIRMA_GLOBAL_PROGRAMLAR.md** içindedir. Codex/Claude ile geliştirmeyi sürdürmek için **CODEXTE_BASLAT.md** ve **IPAD_ILE_DEVAM.md**.
+5. Bu paketi indirmek veya çalıştırmak ERP'yi internete yayımlamaz. Telefonun Mac'e erişimi kurulmaz; fotoğraf okuma için bilgisayarda Tesseract gerekir.
