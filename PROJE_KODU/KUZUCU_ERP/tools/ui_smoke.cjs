@@ -35,7 +35,7 @@ async function run() {
 
     const responseFor = (route, method) => page.waitForResponse(r => new URL(r.url()).pathname === route && r.request().method() === method);
     await page.locator('nav [data-key=fields]').click();
-    for (const [name, value] of Object.entries({ ada_no: '101', code: 'UI-1', name: 'Deneme Tarlası', area_decare: '35.5' })) {
+    for (const [name, value] of Object.entries({ ada_no: '101', code: 'UI-1', name: 'Deneme Tarlası', area_decare: '35,5' })) {
       await page.locator(`#entry [name=${name}]`).fill(value);
     }
     let pending = responseFor('/api/fields', 'POST');

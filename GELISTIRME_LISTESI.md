@@ -43,13 +43,13 @@ Boş deneme veritabanında, gerçek Chromium tarayıcıyla (Türkçe bölge ayar
 
 **Kök neden:** "Alan (dekar)" kutusu tarayıcının sayı kutusu (`type="number"`). Bu kutu Türkçe sayı biçimini (ondalık virgül, binlik nokta) tanımıyor. Stok miktarındaki aynı sorun v0.14'te düzeltilmişti; parsel alanı o düzeltmeye dahil edilmemiş.
 
-- [ ] **Virgül yok sayılıyor (veri bozuluyor):** klavyeyle `12,5` yazılınca kutu `125` oluyor ve 125 dekar kaydediliyor. `35,5` → 355 dekar. Hata mesajı çıkmıyor.
-- [ ] **Binlik nokta ondalık sanılıyor:** `1.250` (bin iki yüz elli) → 1,25 dekar kaydediliyor. `1.250,5` → 1,2505.
-- [ ] **Tarayıcı uyarıları programın değil, tarayıcının dilinde:** boş/0 alan için "Please fill out this field", "Value must be greater than or equal to 0.001" gibi mesajlar çıkabiliyor. Kullanıcının gördüğü İngilizce uyarının olası kaynağı.
-- [ ] **Aynı parsel iki kez kaydedilebiliyor:** `P-1` varken ` P-1 ` (boşluklu) ve `p-1` (küçük harf) ayrı parsel olarak kabul ediliyor. Kod kaydedilmeden önce boşluklar temizlenmeli ve büyük/küçük harf farkı gözetilmeden kontrol edilmeli.
-- [ ] Üçten fazla ondalık sessizce yuvarlanıyor (`3,12345` → 3,123). Kullanıcı uyarılmalı.
-- [ ] Ada No boş bırakılınca veritabanına boş metin yazılıyor; "boş" olarak saklanmalı (düzenleme ekranı zaten böyle yapıyor).
-- [ ] Ekrandaki bilgi mesajı, önceki mesajın 5 saniyelik zamanlayıcısı yüzünden erken kaybolabiliyor; ardışık kayıtta "Kaydedildi" görünmeyebilir.
+- [x] **Virgül yok sayılıyor (veri bozuluyor):** klavyeyle `12,5` yazılınca kutu `125` oluyor ve 125 dekar kaydediliyor. `35,5` → 355 dekar. Hata mesajı çıkmıyor.
+- [x] **Binlik nokta ondalık sanılıyor:** `1.250` (bin iki yüz elli) → 1,25 dekar kaydediliyor. `1.250,5` → 1,2505.
+- [x] **Tarayıcı uyarıları programın değil, tarayıcının dilinde:** boş/0 alan için "Please fill out this field", "Value must be greater than or equal to 0.001" gibi mesajlar çıkabiliyor. Kullanıcının gördüğü İngilizce uyarının olası kaynağı.
+- [x] **Aynı parsel iki kez kaydedilebiliyor:** `P-1` varken ` P-1 ` (boşluklu) ve `p-1` (küçük harf) ayrı parsel olarak kabul ediliyor. Kod kaydedilmeden önce boşluklar temizlenmeli ve büyük/küçük harf farkı gözetilmeden kontrol edilmeli.
+- [x] Üçten fazla ondalık sessizce yuvarlanıyor (`3,12345` → 3,123). Kullanıcı uyarılmalı.
+- [x] Ada No boş bırakılınca veritabanına boş metin yazılıyor; "boş" olarak saklanmalı (düzenleme ekranı zaten böyle yapıyor).
+- [x] Ekrandaki bilgi mesajı, önceki mesajın 5 saniyelik zamanlayıcısı yüzünden erken kaybolabiliyor; ardışık kayıtta "Kaydedildi" görünmeyebilir.
 - Doğru çalışanlar: normal kayıt, Ada No'suz kayıt, aynı kodla tekrar kayıtta Türkçe "Parsel kodu zaten kayıtlı." uyarısı, 0 dekarın engellenmesi. Sunucu günlüğünde hata yok.
 
 **Önerilen düzeltme (sürüm talimatı bekleniyor):** Alan kutusunu stok miktarındaki gibi Türkçe metin kutusu + `canonicalQuantity` dönüşümüyle değiştir; düzenleme formuna da uygula; sunucuda kodu kırp ve harf duyarsız tekrar kontrolü yap; tarayıcı uyarıları yerine Türkçe mesaj göster; regresyon testleri ekle.
@@ -57,3 +57,16 @@ Boş deneme veritabanında, gerçek Chromium tarayıcıyla (Türkçe bölge ayar
 **Mevcut veriler:** Eski kayıtlarda alanı 10 kat büyük (virgül kaybı) veya 1000 kat küçük (binlik nokta) parseller olabilir. Otomatik tahminle düzeltilmeyecek; kullanıcı listeyi gözden geçirip "Düzenle" ile düzeltmeli.
 
 **Sınır:** Test, başsız Chromium ile yapıldı; Mac'teki Türkçe Chrome'da virgül davranışı farklı olabilir. Kullanıcının Mac'inde `12,5` yazıp sonucu kontrol etmesi önerilir.
+
+### 11 Kasım 2026 — Parsel düzeltmeleri uygulandı (kullanıcı: "problemleri çözelim")
+
+Yeni sürüm paketi (ZIP) **hazırlanmadı**; ekran sürümü hâlâ v0.14.0. Paket için kullanıcının "Son sürümü hazırla" demesi beklenir.
+
+- [x] Parsel "Alan (dekar)" kutusu (yeni kayıt ve Düzenle) Türkçe sayı kutusu oldu: `12,5` → 12,5; `1.250` → 1.250; yazarken binlik nokta kendiliğinden konur.
+- [x] Tartımlar ekranındaki "Canlı ağırlık (kg)" kutusunda aynı virgül sorunu vardı; o da düzeltildi.
+- [x] Parsel kodu: baş/son boşluklar silinir; büyük/küçük harf ve I/İ/ı/i farkı gözetilmeden mükerrer kontrolü. Eski mükerrer kayıtlar kendi kodu değişmeden düzenlenebilir.
+- [x] 3'ten fazla ondalık sunucuda reddedilir (yuvarlanmaz). Boş Ada No boş olarak saklanır.
+- [x] Boş/hatalı alanlarda tarayıcının İngilizce uyarısı yerine Türkçe uyarı (tüm formlarda).
+- [x] Bilgi mesajının erken kaybolması düzeltildi. `parcels.js` önbellek anahtarı yenilendi (`?v=014b`).
+- [x] Testler: 9 yeni test (`tests/test_parcel_input.py`), toplam 53 test geçti. Gerçek Chromium ile yeni kayıt/düzenleme/mükerrer/boş/0 denendi; JavaScript hatası 0.
+- [ ] Kullanıcının Mac'inde deneme ve eski parsellerin alanlarının elle gözden geçirilmesi.

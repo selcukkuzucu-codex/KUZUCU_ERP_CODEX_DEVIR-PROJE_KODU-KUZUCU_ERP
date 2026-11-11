@@ -10,7 +10,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field as PField, ConfigDict, model_validator
+from pydantic import BaseModel, Field as PField, ConfigDict, model_validator, field_validator
 from sqlalchemy import select, func, text
 from sqlalchemy.orm import Session
 from .db import Base, engine, get_db
@@ -193,7 +193,21 @@ class FieldIn(BaseModel):
     code: str = PField(min_length=1, max_length=40)
     ada_no: str | None = PField(default=None, max_length=40)
     name: str = PField(min_length=1, max_length=120)
-    area_decare: Decimal = PField(gt=0)
+    # Veritabanı sütunu Numeric(12,3): fazla ondalık sessizce yuvarlanmasın.
+    area_decare: Decimal = PField(gt=0, max_digits=12, decimal_places=3)
+
+    @field_validator('code', 'ada_no', 'name', mode='before')
+    @classmethod
+    def strip_text(cls, value):
+        # Baştaki/sondaki boşluklar ayrı parsel kodu oluşturmasın; boş Ada No saklanmasın.
+        if isinstance(value, str):
+            value = value.strip()
+        return value
+
+    @field_validator('ada_no')
+    @classmethod
+    def empty_ada_is_none(cls, value):
+        return value or None
 class SeasonIn(BaseModel):
     field_id: int
     year: int = PField(ge=2000, le=2200)
@@ -307,9 +321,19 @@ def get_weights(animal_id:int,db:Session=Depends(get_db)):
     authors=creator_map(db,'weighings',[r.id for r in rows])
     return [{**as_dict(x),'created_by':authors.get(x.id,'Eski kayıt')} for x in rows]
 
+def parcel_code_key(code:str)->str:
+    # Türkçe I/İ/ı/i ve büyük/küçük harf farkı aynı parseli ikinci kez açtırmasın.
+    return ''.join(code.translate(str.maketrans({'İ':'i','I':'i','ı':'i'})).casefold().split())
+
+def ensure_parcel_code_free(db,code:str,exclude_id:int|None=None):
+    key=parcel_code_key(code)
+    for other_id,other_code in db.execute(select(Field.id,Field.code)).all():
+        if other_id!=exclude_id and parcel_code_key(other_code or '')==key:
+            raise HTTPException(409,f'Parsel kodu zaten kayıtlı: {other_code}. Aynı parseli ikinci kez açmayın; gerekiyorsa farklı bir kod yazın.')
+
 @app.post('/api/fields',status_code=201)
 def add_field(data:FieldIn,db:Session=Depends(get_db)):
-    unique(db,Field,'code',data.code)
+    ensure_parcel_code_free(db,data.code)
     obj=Field(**data.model_dump());db.add(obj);db.commit();db.refresh(obj);return as_dict(obj)
 @app.get('/api/fields')
 def get_fields(search:str='', db:Session=Depends(get_db)):
@@ -365,8 +389,9 @@ def update_field(field_id:int,data:FieldIn,db:Session=Depends(get_db)):
     obj = db.get(Field,field_id)
     if obj is None:
         raise HTTPException(404,'Parsel bulunamadı')
-    if data.code != obj.code:
-        unique(db,Field,'code',data.code)
+    # Yalnızca kod gerçekten değiştiyse kontrol et; eski mükerrer kayıtlar düzenlenebilsin.
+    if parcel_code_key(data.code) != parcel_code_key(obj.code or ''):
+        ensure_parcel_code_free(db,data.code,exclude_id=obj.id)
     for k,v in data.model_dump().items():
         setattr(obj,k,v)
     db.commit()
