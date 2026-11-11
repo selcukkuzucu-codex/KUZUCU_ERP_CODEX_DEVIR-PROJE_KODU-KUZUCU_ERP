@@ -437,7 +437,7 @@ Kullanıcı kararı: **A3 (arınma / kesim yasağı koruması) hariç tüm öner
 
 Örnek tasarım hazırlandı (kullanıcıya özel bağlantı): https://claude.ai/artifact/VS1UtNYg8beygacuNVoT1q — kullanıcı onayı / düzeltmeleri bekleniyor.
 
-- [ ] Renkler: menü koyu yeşil `#0F2E20`, ana düğme yeşil `#1E5E3F`, vurgu altın `#C99A2E`, sayfa zemini `#F4F6F2`, metin `#17211C`, hata kırmızı `#B42318`. Boğa başlı logo ve KUZUCU / ERP System kimliği korunur.
+- [ ] Renkler: menü koyu yeşil `#0F2E20`, ana düğme yeşil `#1E5E3F`, vurgu altın `#C99A2E`, sayfa zemini `#F4F6F2`, metin `#17211C`, hata kırmızı `#B42318`. **Logo değişmeyecek (kullanıcı kararı 11.11.2026):** mevcut `kuzucu_logo.png` aynen kullanılır; koyu menüde açık renkli, altın çerçeveli kutu içinde gösterilir. Logo dosyası yeniden çizilmez, renkleri değiştirilmez.
 - [ ] Yazı tipi: Inter (Türkçe karakter desteği). Programla birlikte dosya olarak gelir; internete bağlı olmadan da çalışır.
 - [ ] Sol menü: koyu yeşil, simgeli ana başlıklar, açılır alt sayfalar, menüde arama, altta "Son yedek" ve sürüm bilgisi. Seçili sayfa altın renkle vurgulanır.
 - [ ] Üst bölüm: sayfa başlığı ve tarih, sık kullanılan hızlı işlem düğmeleri (Tartım Gir, Stok Girişi, Tedavi Kaydı), kullanıcı ve Çıkış Yap.
