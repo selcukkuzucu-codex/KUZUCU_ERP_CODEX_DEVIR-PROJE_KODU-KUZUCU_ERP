@@ -93,7 +93,9 @@ def _safe_date(year: int, month: int, day: int) -> date | None:
 def parse_report_dates(query: str, today: date | None = None) -> tuple[date | None, date | None]:
     """'1 Ekim ile 31 Ekim arasında', '01.10.2026-31.10.2026', 'Ekim 2026', 'geçen ay',
     'bu yıl', 'son 30 gün' gibi ifadelerden tarih aralığı çıkarır. Bulamazsa (None, None)."""
-    today = today or date.today()
+    if today is None:
+        from .calf import today_local
+        today = today_local()
     q = _norm(query)
 
     numeric = re.findall(r'\b(\d{1,2})[./](\d{1,2})[./](\d{4})\b', q)

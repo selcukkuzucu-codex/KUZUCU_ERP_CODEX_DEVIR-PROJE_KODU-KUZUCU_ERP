@@ -30,8 +30,10 @@ def _today():
 def _avg_daily_gain(db):
     """Aktif hayvanlarda son iki ölçüm (giriş tartımı dahil) arasındaki günlük artışın ortalaması."""
     animals = {a.id: a for a in db.scalars(select(Animal).where(Animal.status == 'active'))}
+    if not animals:
+        return None, 0
     weighings = {}
-    for w in db.scalars(select(Weighing).where(Weighing.animal_id.in_(animals.keys())) if animals else []):
+    for w in db.scalars(select(Weighing).where(Weighing.animal_id.in_(list(animals)))):
         weighings.setdefault(w.animal_id, []).append((w.measured_at, w.weight_kg))
     gains = []
     for animal_id, animal in animals.items():
@@ -145,7 +147,7 @@ def insights(request: Request, db: Session = Depends(get_db)):
             if exited:
                 from .animal_operations import AnimalExit
                 exit_day = dict(db.execute(select(AnimalExit.animal_id, func.max(AnimalExit.exit_date)).group_by(AnimalExit.animal_id)).all())
-                wrong = [w for w in db.scalars(select(Weighing).where(Weighing.animal_id.in_(exited.keys())))
+                wrong = [w for w in db.scalars(select(Weighing).where(Weighing.animal_id.in_(list(exited))))
                          if exit_day.get(w.animal_id) and w.measured_at > exit_day[w.animal_id]]
                 if wrong:
                     a = exited[wrong[0].animal_id]

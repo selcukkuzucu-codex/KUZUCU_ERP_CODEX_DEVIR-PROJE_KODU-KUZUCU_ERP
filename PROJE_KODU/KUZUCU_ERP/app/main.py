@@ -278,7 +278,8 @@ def as_dict(row):
     if isinstance(row, Animal):
         output['tr_ear_tag']=row.ear_tag
         if row.birth_date:
-            today=date.today()
+            from .calf import today_local
+            today=today_local()
             output['age_days']=(today-row.birth_date).days
             output['age_months']=max(0, (today.year-row.birth_date.year)*12+today.month-row.birth_date.month-(today.day<row.birth_date.day))
         else:

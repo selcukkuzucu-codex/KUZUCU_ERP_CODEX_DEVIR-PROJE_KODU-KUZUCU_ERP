@@ -10,26 +10,33 @@ async function run() {
   if (!base || !evidence || !['127.0.0.1', 'localhost'].includes(new URL(base).hostname)) throw Error('Ayrı, boş bir yerel deneme sunucusu ve çıktı klasörü belirtin.');
   await fs.mkdir(evidence, { recursive: true });
   const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH || undefined });
-  const report = { version: '0.15.0', checks: [], viewports: [], javascriptErrors: [], failedResources: [], draftRequests: [] };
+  const report = { version: '0.16.0', checks: [], viewports: [], javascriptErrors: [], failedResources: [], draftRequests: [] };
   let page;
   try {
-    const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: 'tr-TR' });
+    const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: 'tr-TR', timezoneId: 'Europe/Istanbul' });
     page = await context.newPage();page.setDefaultTimeout(15000);
     const watch = p => { p.on('request',r=>{if(new URL(r.url()).pathname.startsWith('/api/auth/drafts/'))report.draftRequests.push(new URL(r.url()).pathname)});p.on('pageerror', e => report.javascriptErrors.push(e.message));p.on('dialog', d => d.accept());p.on('response', r => {if(r.status()>=400&&new URL(r.url()).pathname.startsWith('/static/'))report.failedResources.push({url:r.url(),status:r.status()})}); };
     watch(page);
     const health = await (await context.request.get(base + '/api/health')).json();
-    assert.equal(health.status,'ok');assert.equal(health.version,'0.15.0');assert.match(health.instance_id,/^[a-f0-9]{64}$/);
+    assert.equal(health.status,'ok');assert.equal(health.version,'0.16.0');assert.match(health.instance_id,/^[a-f0-9]{64}$/);
     assert.equal((await (await context.request.get(base + '/api/auth/setup')).json()).needs_setup, true, 'Bu test mevcut kullanıcı veritabanında çalıştırılamaz.');
+    // v0.16 gruplu menü: alt sayfa kapalı bir grubun içindeyse önce grup başlığı açılır; telefonda ☰ ile menü açılır.
+    async function openNav(pg,key){
+      if(await pg.locator('#navToggle').isVisible()&&!(await pg.evaluate(()=>document.body.classList.contains('nav-open'))))await pg.locator('#navToggle').click();
+      const item=pg.locator(`nav [data-key="${key}"]`);await item.waitFor({state:'attached'});
+      if(!(await item.isVisible())){const group=await pg.evaluate(k=>document.querySelector(`nav [data-key="${k}"]`).closest('.nav-group').querySelector('[data-group]').dataset.group,key);await pg.locator(`nav [data-group="${group}"]`).click()}
+      await pg.locator(`nav [data-key="${key}"]`).click();
+    }
     const responseFor = (route, method) => page.waitForResponse(r => new URL(r.url()).pathname === route && r.request().method() === method);
     async function settled(){await page.waitForTimeout(100);await page.waitForLoadState('networkidle');}
-    async function nav(key,ready){await page.locator(`nav [data-key=${key}]`).click();await page.locator(ready||'#content h1').first().waitFor();await settled();assert.equal(await page.getByText('İşlem açılamadı',{exact:true}).count(),0);}
+    async function nav(key,ready){await openNav(page,key);await page.locator(ready||'#content h1').first().waitFor();await settled();assert.equal(await page.getByText('İşlem açılamadı',{exact:true}).count(),0);}
     async function fill(form,values){for(const [name,value]of Object.entries(values))await page.locator(`${form} [name=${name}]`).fill(value);}
     async function submit(selector,route,method='POST',expected=201){const p=responseFor(route,method);await page.locator(selector).click();const r=await p;if(r.status()!==expected)assert.equal(r.status(),expected,await r.text());const d=r.status()===204?null:await r.json();await settled();return d;}
     const today=new Date().toLocaleDateString('sv-SE',{timeZone:'Europe/Istanbul'}),yesterday=new Date(Date.now()-86400000).toLocaleDateString('sv-SE',{timeZone:'Europe/Istanbul'});
     await page.goto(base);
     await fill('#authForm',{display_name:'Tarayıcı Denemesi',username:'arayuzdenemesi',password:crypto.randomBytes(24).toString('base64url')});
-    await page.locator('#authForm button').click();await page.locator('nav [data-key=fields]').waitFor();await settled();assert.match(await page.title(), /v0\.15/);
-    report.checks.push('Boş veritabanında ilk yönetici oluşturma ve v0.15 açılışı');
+    await page.locator('#authForm button').click();await page.locator('nav [data-key=fields]').waitFor({state:'attached'});await settled();assert.match(await page.title(), /v0\.16/);
+    report.checks.push('Boş veritabanında ilk yönetici oluşturma ve v0.16 açılışı');
 
     await nav('fields','#parcelEntryForm');
     await fill('#parcelEntryForm',{ada_no:'101',code:'UI-1',name:'Deneme Tarlası',area_decare:'35,5'});
@@ -101,12 +108,12 @@ async function run() {
     const healthCase=await submit('#healthCaseSave','/api/animal-health/cases');assert.equal(healthCase.duration_days,3);assert.equal(healthCase.start_date,today);
     report.checks.push('Sağlık formunda kaldırılan alanlar yok; üç günlük tedavi kayıt gününden başlıyor');
 
-    await nav('firms','#firmEntryForm');await fill('#firmEntryForm',{name:'Deneme Firması',phone:'5550000000'});const firm=await submit('#firmEntryForm button','/api/firms');
+    await nav('cariler','#firmEntryForm');await fill('#firmEntryForm',{name:'Deneme Firması',phone:'5550000000'});const firm=await submit('#firmEntryForm button','/api/firms');
     await nav('faturalar','#finInvoice');await fill('#finInvoice',{invoice_no:'UI-FATURA-1'});await page.locator('#finInvoice [name=firm_id]').selectOption(String(firm.id));await page.locator('#finInvoiceAdd').click();
     await page.locator('[data-fin-line="0"][data-field=quantity]').fill('10');await page.locator('[data-fin-line="0"][data-field=unit_price]').fill('1.000');await page.locator('[data-fin-line="0"][data-field=vat_rate]').fill('20');
     const invoice=await submit('#finInvoiceSave','/api/finance/invoices');assert.equal(invoice.subtotal,'10000.00');assert.equal(invoice.vat_total,'2000.00');assert.equal(invoice.total,'12000.00');
     await submit(`[data-fin-post="${invoice.id}"]`,`/api/finance/invoices/${invoice.id}/post`,'POST',200);
-    await nav('hesaplar','#finLedger');assert.match(await page.locator('#content').innerText(),/12\.000/);
+    await nav('cariler','#finLedger');assert.match(await page.locator('#content').innerText(),/12\.000/);
     report.checks.push('KDV hariç fiyatla fatura taslağı; KDV/toplam doğrulama, onay ve cari bakiye');
 
     await nav('personel','#personnelEmployeeForm');await fill('#personnelEmployeeForm',{employee_no:'UI-P01',full_name:'Deneme Personeli',start_date:yesterday});
@@ -116,15 +123,30 @@ async function run() {
     report.checks.push('Personel kartı ve Türkçe ondalıkla mesai kaydı');
 
     await nav('audit','details');await page.locator('details').first().locator('summary').click();const auditText=await page.locator('#content').innerText();assert.ok(!/erp_users|health_print_runs|permissions_json|is_active|"new"/.test(auditText));
-    assert.match(auditText,/Önceki|Yeni/);report.checks.push('İşlem geçmişi bölüm, alan, önceki ve yeni değerlerinin Türkçe gösterimi');
+    assert.match(auditText,/Önceki|Yeni|ÖNCEKİ|YENİ/);report.checks.push('İşlem geçmişi bölüm, alan, önceki ve yeni değerlerinin Türkçe gösterimi');
     const error=await page.evaluate(()=>turkishError('Failed to fetch'));assert.ok(!/Failed|fetch/.test(error));
     await nav('reports','#reportForm');await page.locator('#reportQuery').fill('aktif hayvanları listele');
     const animalReport=await submit('#reportForm button[type=submit]','/api/reports/query','POST',200);assert.equal(animalReport.scope,'reports.animals');assert.ok(!animalReport.rows.flat().includes('active'));await page.locator('#reportPhotoArea #photoDocumentForm').waitFor();
     const downloadPromise=page.waitForEvent('download');await page.locator('#reportExport').click();const download=await downloadPromise;const csvPath=path.join(evidence,'hayvan_raporu.csv');await download.saveAs(csvPath);const csv=await fs.readFile(csvPath,'utf8');assert.match(csv,/Aktif/);assert.ok(!/\bactive\b/.test(csv));report.checks.push('Ortak hayvan raporu ve CSV Türkçe; rapor ekranında belge fotoğrafı alanı');
 
-    const ready={dashboard:'.cards',pens:'#entry',animals:'#animalForm',calves:'#calfForm','animal-health':'#healthCaseForm',topluhayvan:'#animalOpsForm',hayvancikis:'#animalOpsForm',weighings:'#entry',fields:'#parcelEntryForm',seasons:'#entry',items:'#entry',stokgiris:'#finExcel',stock:'#stockItemFilter',uyarilar:'#content table',faturalar:'#finInvoice',hesaplar:'#finLedger',maliyetler:'#content table',personel:'#personnelEmployeeForm',firms:'#firmEntryForm',reminders:'#reminderForm',reports:'#reportForm',integrations:'#content h1',belgeaktarim:'#photoDocumentForm',documents:'#documentForm',users:'#erpUserForm',audit:'details'};
+    // v0.16: stok girişinden yeni ürün; yazılan miktar korunur ve ürün seçili gelir.
+    await nav('stokgiris','#finStock');await page.locator('#finStock [name=quantity]').fill('1.250');
+    await page.locator('#finNewItem').click();await fill('#finItemForm',{code:'UI-SILAJ',name:'Deneme Silajı'});
+    const newItem=await submit('#finItemSave','/api/items');assert.equal(await page.locator('#finStock [name=item_id]').inputValue(),String(newItem.id));
+    assert.equal(await page.locator('#finStock [name=quantity]').inputValue(),'1.250');assert.equal(await page.locator('#finItemDialog').evaluate(d=>d.open),false);
+    report.checks.push('Stok Girişi ekranından yeni ürün ekleme; ürün seçili, yazılan miktar korunuyor');
+    // v0.16: olağandışı tartım onay ister; İptal edilirse kayıt yapılmaz.
+    page.removeAllListeners('dialog');let unusualText='';page.once('dialog',d=>{unusualText=d.message();d.dismiss()});
+    await nav('weighings','#entry');await page.locator('#entry [name=weight_kg]').fill('3.900');await page.locator('#entry button').click();await settled();
+    assert.match(unusualText,/Olağandışı/);assert.match(await page.locator('#message').innerText(),/Kayıt yapılmadı/);page.on('dialog',d=>d.accept());
+    report.checks.push('Olağandışı tartım değeri onay istiyor; vazgeçilince kaydedilmiyor');
+    await nav('cikisraporu','#exitForm');await page.locator('[data-range=year]').click();await page.locator('#exitResult table').waitFor();assert.match(await page.locator('#exitResult').innerText(),/baş/);
+    await nav('yedekler','#backupNow');await submit('#backupNow','/api/backups/now','POST',200);
+    await nav('dashboard','.kpi-grid');assert.match(await page.locator('#content h1').innerText(),/Ana Sayfa/);
+    report.checks.push('Hayvan Çıkış Raporu, elle yedek ve Ana Sayfa göstergeleri');
+    const ready={dashboard:'.page-head',pens:'#entry',animals:'#animalForm',calves:'#calfForm','animal-health':'#healthCaseForm',topluhayvan:'#animalOpsForm',hayvancikis:'#animalOpsForm',weighings:'#entry',fields:'#parcelEntryForm',seasons:'#entry',items:'#entry',stokgiris:'#finExcel',stock:'#stockItemFilter',uyarilar:'#content table',faturalar:'#finInvoice',cariler:'#finLedger',kasabanka:'#finAccount',maliyetler:'#content table',personel:'#personnelEmployeeForm',reminders:'#reminderForm',reports:'#reportForm',cikisraporu:'#exitForm',integrations:'#content h1',belgeaktarim:'#photoDocumentForm',documents:'#documentForm',users:'#erpUserForm',audit:'details',yedekler:'#backupNow'};
     for(const key of Object.keys(ready)){await nav(key,ready[key]);}
-    report.checks.push('Yöneticide 26 menü ekranının açılması');
+    report.checks.push(`Yöneticide ${Object.keys(ready).length} menü ekranının gruplu menüden açılması`);
     // Geç biten bir ekran isteği, kullanıcının son seçtiği ekranı değiştiremez.
     await page.route('**/api/personnel/employees*',async route=>{await new Promise(resolve=>setTimeout(resolve,250));await route.continue()});
     const oldRequest=page.waitForRequest(r=>new URL(r.url()).pathname==='/api/personnel/employees');
@@ -134,10 +156,10 @@ async function run() {
     await page.unroute('**/api/personnel/employees*');report.checks.push('Geciken önceki ekran isteği son menü seçimini değiştirmiyor');
     const state=await context.storageState();
     for(const [width,height]of [[768,1024],[1024,768],[390,844]]){
-      const tablet=await browser.newContext({viewport:{width,height},isMobile:true,hasTouch:true,locale:'tr-TR',storageState:state});const screen=await tablet.newPage();screen.setDefaultTimeout(15000);watch(screen);await screen.goto(base);await screen.locator('nav').waitFor();
+      const tablet=await browser.newContext({viewport:{width,height},isMobile:true,hasTouch:true,locale:'tr-TR',timezoneId:'Europe/Istanbul',storageState:state});const screen=await tablet.newPage();screen.setDefaultTimeout(15000);watch(screen);await screen.goto(base);await screen.locator('nav [data-key]').first().waitFor({state:'attached'});
       const measurements=[];
-      for(const key of ['fields','calves','users','stock','reminders','animal-health','stokgiris','uyarilar','faturalar','hesaplar','personel','topluhayvan','hayvancikis','belgeaktarim']){
-        await screen.locator(`nav [data-key=${key}]`).click();await screen.locator(ready[key]).first().waitFor();await screen.waitForLoadState('networkidle');assert.equal(await screen.getByText('İşlem açılamadı',{exact:true}).count(),0);
+      for(const key of ['fields','calves','users','stock','reminders','animal-health','stokgiris','uyarilar','faturalar','cariler','cikisraporu','personel','topluhayvan','hayvancikis','belgeaktarim']){
+        await openNav(screen,key);await screen.locator(ready[key]).first().waitFor();await screen.waitForLoadState('networkidle');assert.equal(await screen.getByText('İşlem açılamadı',{exact:true}).count(),0);
         const size=await screen.evaluate(()=>({viewport:innerWidth,page:document.documentElement.scrollWidth}));if(size.page>width+1||size.viewport>width+1){await screen.screenshot({path:path.join(evidence,`${width}x${height}-${key}-overflow.png`),fullPage:true});report.overflow={width,height,key,...size};report.overflowElements=await screen.evaluate(width=>[...document.querySelectorAll('#content *')].filter(el=>el.getBoundingClientRect().width>width).slice(0,20).map(el=>({tag:el.tagName,id:el.id,class:el.className,width:el.getBoundingClientRect().width,parent:el.parentElement?.id})),width)}assert.ok(size.page<=width+1&&size.viewport<=width+1,`${width}x${height} ${key}: sayfa taştı ${JSON.stringify(size)}`);measurements.push({section:key,...size});
         if(['fields','faturalar','personel'].includes(key))await screen.screenshot({path:path.join(evidence,`${width}x${height}-${key}.png`),fullPage:true});
       }

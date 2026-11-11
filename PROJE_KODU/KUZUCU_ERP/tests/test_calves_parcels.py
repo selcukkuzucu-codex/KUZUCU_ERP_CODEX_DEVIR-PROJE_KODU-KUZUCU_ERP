@@ -10,6 +10,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app import main
 from app.db import get_db
+from app.calf import today_local
 
 
 def isolate(tmp_path,monkeypatch):
@@ -29,18 +30,18 @@ def test_animals_and_parcel_images(tmp_path,monkeypatch):
     try:
         with TestClient(main.app) as c:
             pen=c.post('/api/pens',json={'code':'BUZ-3','capacity':20}).json()['id']
-            birth=(date.today()-timedelta(days=80)).isoformat()
+            birth=(today_local()-timedelta(days=80)).isoformat()
             animal=c.post('/api/animals',json={'tr_ear_tag':'TR-0011','farm_ear_tag':'IS-0001','sex':'female',
-                   'birth_date':birth,'breed':'Simental','arrival_date':date.today().isoformat(),
+                   'birth_date':birth,'breed':'Simental','arrival_date':today_local().isoformat(),
                    'entry_weight_kg':'70.250','pen_id':pen})
             assert animal.status_code==201,animal.text
             a=animal.json();assert a['tr_ear_tag']=='TR-0011' and a['age_days']==80
             assert a['farm_ear_tag']=='IS-0001' and a['sex']=='female'
             duplicate=c.post('/api/animals',json={'tr_ear_tag':'TR-0022','farm_ear_tag':'IS-0001',
-                  'arrival_date':date.today().isoformat(),'entry_weight_kg':'80','pen_id':pen})
+                  'arrival_date':today_local().isoformat(),'entry_weight_kg':'80','pen_id':pen})
             assert duplicate.status_code==409
             edit=c.put(f'/api/animals/{a["id"]}',json={'tr_ear_tag':'TR-0011','farm_ear_tag':'IS-0099',
-                  'birth_date':birth,'sex':'female','arrival_date':date.today().isoformat(),
+                  'birth_date':birth,'sex':'female','arrival_date':today_local().isoformat(),
                   'entry_weight_kg':'75.750','pen_id':pen})
             assert edit.status_code==200 and edit.json()['farm_ear_tag']=='IS-0099'
             field=c.post('/api/fields',json={'ada_no':'155','code':'42','name':'Kuzey Tarla','area_decare':'35.500'})
@@ -62,7 +63,7 @@ def test_animals_and_parcel_images(tmp_path,monkeypatch):
 
 def test_calves_daily_intake_bulk_exit_adg_csv(tmp_path,monkeypatch):
     eng=isolate(tmp_path,monkeypatch)
-    today=date.today();entry=today-timedelta(days=45)
+    today=today_local();entry=today-timedelta(days=45)
     try:
         with TestClient(main.app) as c:
             ids=[]

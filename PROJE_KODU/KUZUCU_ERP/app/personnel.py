@@ -136,8 +136,15 @@ def employee(db, employee_id):
     return row
 
 
+def turkey_today():
+    """İşletme Türkiye saatine göre çalışır; bilgisayar başka saat dilimindeyse de gün kaymaz."""
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    return datetime.now(ZoneInfo('Europe/Istanbul')).date()
+
+
 def status_of(row):
-    today = date.today()
+    today = turkey_today()
     if row.start_date > today:
         return 'not_started'
     if row.end_date:
@@ -189,7 +196,7 @@ def annual_reserved(db, employee_id, year, exclude=None):
 def balance(db, row, year):
     allowance = db.scalar(select(AnnualAllowance).where(AnnualAllowance.employee_id == row.id, AnnualAllowance.year == year))
     used = planned = 0
-    today = date.today()
+    today = turkey_today()
     for leave in db.scalars(select(PersonnelLeave).where(PersonnelLeave.employee_id == row.id, PersonnelLeave.kind == 'annual')):
         total = year_days(leave.starts_on, leave.ends_on, year)
         elapsed = year_days(leave.starts_on, min(leave.ends_on, today), year) if leave.starts_on <= today else 0
@@ -268,7 +275,7 @@ def list_overtime(request: Request, employee_id: int | None = None, date_from: d
 def validate_overtime(db, data, exclude=None):
     person = employee(db, data.employee_id)
     check_employment(person, data.worked_on, data.worked_on)
-    if data.worked_on > date.today():
+    if data.worked_on > turkey_today():
         raise HTTPException(422, 'Gelecek günün mesaisi gerçekleşmiş olarak kaydedilemez.')
     duplicate = select(Overtime.id).where(Overtime.employee_id == data.employee_id, Overtime.worked_on == data.worked_on)
     if exclude is not None:
@@ -411,7 +418,7 @@ def set_allowance(employee_id: int, year: int, data: AllowanceIn, request: Reque
 
 
 @router.get('/balances')
-def get_balances(request: Request, employee_id: int | None = None, year: int = Query(default_factory=lambda: date.today().year, ge=2000, le=2200),
+def get_balances(request: Request, employee_id: int | None = None, year: int = Query(default_factory=lambda: turkey_today().year, ge=2000, le=2200),
                   db: Session = Depends(get_db)):
     need(request, 'reports.payroll.view')
     return [balance(db, row, year) for row in selected_employees(db, employee_id)]
@@ -421,7 +428,7 @@ def report_data(db, employee_id=None, status='', date_from=None, date_to=None, k
     check_range(date_from, date_to)
     if kind not in ('summary', 'employees', 'overtime', 'leaves', 'employment'):
         raise HTTPException(422, 'Geçerli personel rapor türünü seçin.')
-    year = year or date.today().year
+    year = year or turkey_today().year
     if not 2000 <= year <= 2200:
         raise HTTPException(422, 'İzin yılı 2000 ile 2200 arasında olmalı.')
     people = selected_employees(db, employee_id, status)

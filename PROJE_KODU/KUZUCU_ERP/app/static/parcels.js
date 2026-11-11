@@ -21,6 +21,7 @@ f.elements.namedItem('area_decare').value=fmtDbQuantity(r.area_decare)==='—'?'
 async function parcelMultipartRequest(url,body){
  let response;try{response=await fetch(url,{method:'POST',headers:authHeaders({}),body})}catch(_error){throw Error('Programa bağlanılamadı. Bağlantıyı kontrol edip yeniden deneyin.')}
  let result;try{result=await response.json()}catch(_error){throw Error('Sunucudan geçerli yanıt alınamadı. Kaydın durumunu kontrol edip yeniden deneyin.')}
+ if(response.status===409&&result?.detail?.code==='unusual'&&!url.includes('onay=1')){if(confirmUnusual(result.detail))return parcelMultipartRequest(url+(url.includes('?')?'&':'?')+'onay=1',body);throw Error('Kayıt yapılmadı. Bilgileri kontrol edip düzeltin.')}
  if(!response.ok)throw Error(humanError(result));return result;
 }
 async function bindParcelScreen(){

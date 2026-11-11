@@ -10,9 +10,9 @@ let registeredDraftForms=new WeakSet();
 const navScopes={dashboard:'dashboard.view',pens:'hayvanlar.padok.view',animals:'hayvanlar.kart.view',
   calves:'hayvanlar.buzagi.view','animal-health':'hayvanlar.saglik.view',weighings:'hayvanlar.tartim.view',
   fields:'tarim.parseller.view',seasons:'tarim.uretim.view',items:'stok.urun.view',stock:'stok.hareket.view',
-  firms:'firmalar.view',reminders:'ajanda.view',integrations:'entegrasyon.view',documents:'belge.view',stokgiris:'stok.hareket.create',uyarilar:'stok.hareket.view',faturalar:'muhasebe.fatura.view',hesaplar:'hesap.cari.view',maliyetler:'reports.cost.view',personel:'personel.view',hayvancikis:'hayvanlar.kart.edit',belgeaktarim:'belge.view'};
+  firms:'firmalar.view',reminders:'ajanda.view',integrations:'entegrasyon.view',documents:'belge.view',stokgiris:'stok.hareket.create',uyarilar:'stok.hareket.view',faturalar:'muhasebe.fatura.view',hesaplar:'hesap.cari.view',maliyetler:'reports.cost.view',personel:'personel.view',hayvancikis:'hayvanlar.kart.edit',belgeaktarim:'belge.view',kasabanka:'hesap.cari.view'};
 function right(scope){return !!erpSession&&(erpSession.is_admin||erpSession.permissions.includes(scope))}
-function sectionAllowed(s){if(s==='users')return !!erpSession?.is_admin;if(s==='audit')return right('audit.view');if(s==='topluhayvan')return ['hayvanlar.kart.create','hayvanlar.kart.edit','hayvanlar.tartim.create'].some(right);
+function sectionAllowed(s){if(s==='users'||s==='yedekler')return !!erpSession?.is_admin;if(s==='cariler')return right('firmalar.view')||right('hesap.cari.view');if(s==='cikisraporu')return right('reports.animals.view')||right('reports.calves.view');if(s==='audit')return right('audit.view');if(s==='topluhayvan')return ['hayvanlar.kart.create','hayvanlar.kart.edit','hayvanlar.tartim.create'].some(right);
  if(s==='reports')return !!erpSession&&(erpSession.is_admin||erpSession.permissions.some(x=>x.startsWith('reports.')&&x.endsWith('.view')));
  return right(navScopes[s]||'!unknown')}
 function authScreen(setup=false,notice=''){
@@ -44,7 +44,7 @@ async function initAuthorized(){
  if(!tools){tools=document.createElement('div');tools.id='erpAccountBar';tools.className='erp-account';document.querySelector('header').appendChild(tools)}
  tools.innerHTML=`<span class="erp-user">${escapeHTML(erpSession.display_name)}<small>${erpSession.is_admin?'Yönetici':escapeHTML(erpSession.department||'Kullanıcı')}</small></span><button type="button" id="erpLogout" class="secondary-action">Çıkış Yap</button>`;
  tools.querySelector('#erpLogout').onclick=async()=>{if(draftDirty.size&&!confirm('Henüz sunucuya gönderilmemiş taslak değişiklikleri var. Yine de çıkış yapılsın mı?'))return;
- await fetch('/api/auth/logout',{method:'POST',headers:{'X-CSRF-Token':erpCsrf}});erpSession=null;erpCsrf='';tools.remove();authScreen(false)};
+ let out={};try{const r=await fetch('/api/auth/logout',{method:'POST',headers:{'X-CSRF-Token':erpCsrf}});out=await r.json()}catch(_e){}erpSession=null;erpCsrf='';tools.remove();authScreen(false,out.backup_ok===false?out.message:'');if(out.backup_ok)document.querySelector('.auth-card .sub')?.insertAdjacentHTML('afterend','<p class="ok-note">Çıkış yapıldı. Kayıtlarınızın yedeği alındı.</p>')};
  if(!sectionAllowed(active))active=sections.find(([k])=>sectionAllowed(k))?.[0]||(erpSession.is_admin?'users':'');
  if(active)await render();else document.querySelector('#content').innerHTML='<h2>Henüz erişim yetkiniz yok.</h2><p>Yöneticinizden bölüm yetkisi isteyin.</p>';
  if(right('ajanda.view'))refreshDue();if(typeof refreshStockAlerts==='function')refreshStockAlerts().catch(()=>{});
