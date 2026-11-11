@@ -39,6 +39,7 @@ async def lifespan(app: FastAPI):
     if engine.dialect.name=='sqlite' and engine.url.database and Path(engine.url.database).is_file() and backup_path is None:
         raise RuntimeError('Açılış öncesi yedek alınamadı. Yedek klasörünün erişimini ve boş alanı kontrol edin; mevcut kayıtlarda geçiş yapılmadı.')
     app.state.auth_session_factory=sessionmaker(bind=engine,autoflush=False,expire_on_commit=False)
+    app.state.db_engine=engine
     Base.metadata.create_all(bind=engine)
     if engine.dialect.name == 'sqlite':
         with engine.begin() as conn:
@@ -98,7 +99,7 @@ async def lifespan(app: FastAPI):
         except asyncio.CancelledError:
             pass
 
-APP_VERSION = '0.15.0'
+APP_VERSION = '0.16.0'
 app = FastAPI(title='KUZUCU ERP - Pilot', version=APP_VERSION, lifespan=lifespan)
 app.include_router(reports_router)
 app.include_router(import_router)
@@ -112,6 +113,8 @@ app.include_router(finance_router)
 app.include_router(personnel_router)
 app.include_router(animal_operations_router)
 app.include_router(capture_router)
+from .v16 import router as v16_router
+app.include_router(v16_router)
 app.middleware('http')(auth_middleware)
 
 FIELD_LABELS = {
@@ -239,9 +242,23 @@ class SeasonIn(BaseModel):
     year: int = PField(ge=2000, le=2200)
     crop: str = PField(min_length=1)
 class ItemIn(BaseModel):
-    code: str = PField(min_length=1)
-    name: str = PField(min_length=1)
-    unit: str = 'kg'
+    code: str = PField(min_length=1, max_length=50)
+    name: str = PField(min_length=1, max_length=120)
+    unit: str = PField(default='kg', max_length=12)
+
+    @field_validator('code', 'name', 'unit', mode='before')
+    @classmethod
+    def strip_item_text(cls, value):
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator('unit')
+    @classmethod
+    def known_unit(cls, value):
+        # Fatura ve stok raporları bu birimleri tanır; birimler birbirine çevrilmez.
+        value = {'litre': 'lt', 'l': 'lt'}.get(value.casefold(), value.casefold())
+        if value not in ('kg', 'ton', 'adet', 'lt'):
+            raise ValueError('Birim kg, ton, adet veya litre olmalı')
+        return value
 class MovementIn(BaseModel):
     item_id: int
     type: str
@@ -335,8 +352,14 @@ def get_pens(db:Session=Depends(get_db)):
     return [as_dict(x) for x in db.scalars(select(Pen).order_by(Pen.code))]
 
 @app.post('/api/animals',status_code=201)
-def add_animal(data:AnimalIn,db:Session=Depends(get_db)):
+def add_animal(data:AnimalIn,request:Request,db:Session=Depends(get_db)):
+    from .checks import LIMITS, require_confirmation, tr_kg
+    from .calf import today_local
     unique(db,Animal,'ear_tag',data.ear_tag)
+    if data.arrival_date>today_local():raise HTTPException(422,'Giriş tarihi ileri bir tarih olamaz.')
+    if data.birth_date and data.birth_date>today_local():raise HTTPException(422,'Doğum tarihi ileri bir tarih olamaz.')
+    if data.entry_weight_kg<LIMITS['animal_min_kg'] or data.entry_weight_kg>LIMITS['animal_max_kg']:
+        require_confirmation(request,[f'Giriş kilosu {tr_kg(data.entry_weight_kg)} kg; besi hayvanı için olağandışı.'])
     pen=db.get(Pen,data.pen_id)
     if pen is None: raise HTTPException(404,'Grup bulunamadı')
     current=db.scalar(select(func.count()).select_from(Animal).where(Animal.pen_id==pen.id,Animal.status=='active')) or 0
@@ -363,8 +386,16 @@ def update_animal(animal_id:int,data:AnimalIn,db:Session=Depends(get_db)):
     db.commit();db.refresh(obj);return as_dict(obj)
 
 @app.post('/api/animals/{animal_id}/weighings',status_code=201)
-def add_weight(animal_id:int,data:WeightIn,db:Session=Depends(get_db)):
-    if not db.get(Animal,animal_id): raise HTTPException(404,'Hayvan bulunamadı')
+def add_weight(animal_id:int,data:WeightIn,request:Request,db:Session=Depends(get_db)):
+    from .checks import weighing_warnings, require_confirmation
+    from .calf import today_local
+    animal=db.get(Animal,animal_id)
+    if not animal: raise HTTPException(404,'Hayvan bulunamadı')
+    if animal.status!='active':raise HTTPException(409,'Çıkışı yapılmış hayvana tartım girilemez.')
+    if data.measured_at>today_local():raise HTTPException(422,'Tartım tarihi ileri bir tarih olamaz.')
+    if data.measured_at<animal.arrival_date:raise HTTPException(422,'Tartım tarihi hayvanın giriş tarihinden önce olamaz.')
+    previous=[(animal.arrival_date,animal.entry_weight_kg)]+[(w.measured_at,w.weight_kg) for w in db.scalars(select(Weighing).where(Weighing.animal_id==animal_id))]
+    require_confirmation(request,weighing_warnings(animal,data.weight_kg,data.measured_at,previous))
     obj=Weighing(animal_id=animal_id,**data.model_dump());db.add(obj);db.commit();db.refresh(obj);return as_dict(obj)
 @app.get('/api/animals/{animal_id}/weighings')
 def get_weights(animal_id:int,db:Session=Depends(get_db)):
@@ -383,9 +414,15 @@ def ensure_parcel_code_free(db,code:str,exclude_id:int|None=None):
         if other_id!=exclude_id and parcel_code_key(other_code or '')==key:
             raise HTTPException(409,f'Parsel kodu zaten kayıtlı: {other_code}. Aynı parseli ikinci kez açmayın; gerekiyorsa farklı bir kod yazın.')
 
+def field_area_warnings(area):
+    from .checks import LIMITS, tr_kg
+    return [f'Alan {tr_kg(area)} dekar; tek parsel için çok büyük. Binlik nokta / ondalık virgül yazımını kontrol edin.'] if area>LIMITS['field_max_decare'] else []
+
 @app.post('/api/fields',status_code=201)
-def add_field(data:FieldIn,db:Session=Depends(get_db)):
+def add_field(data:FieldIn,request:Request,db:Session=Depends(get_db)):
+    from .checks import require_confirmation
     ensure_parcel_code_free(db,data.code)
+    require_confirmation(request,field_area_warnings(data.area_decare))
     obj=Field(**data.model_dump());db.add(obj);db.commit();db.refresh(obj);return as_dict(obj)
 @app.get('/api/fields')
 def get_fields(search:str='', db:Session=Depends(get_db)):
@@ -453,6 +490,7 @@ async def add_field_with_image(code: str = Form(..., min_length=1, max_length=40
                                area_decare: Decimal = Form(..., gt=0),
                                ada_no: str | None = Form(default=None, max_length=40),
                                file: UploadFile | None = File(default=None),
+                               request: Request = None,
                                db: Session = Depends(get_db)):
     """Form ve fotoğraf birlikte doğrulanır; hata olduğunda parsel kaydı oluşmaz."""
     from sqlalchemy.exc import IntegrityError
@@ -463,6 +501,8 @@ async def add_field_with_image(code: str = Form(..., min_length=1, max_length=40
         # Boşluktan ibaret kod veya fazla ondalık: Türkçe 422 mesajı, genel sunucu hatası değil.
         raise RequestValidationError(error.errors()) from error
     ensure_parcel_code_free(db, data.code)
+    from .checks import require_confirmation
+    require_confirmation(request, field_area_warnings(data.area_decare))
     content = await _validated_parcel_image(file) if file and file.filename else None
     new_path = None
     try:
@@ -511,10 +551,12 @@ def get_satellite_image(field_id:int,db:Session=Depends(get_db)):
     if not path.is_file():raise HTTPException(404,'Parsel görseli dosyası bulunamadı')
     return FileResponse(path,media_type='image/jpeg')
 @app.put('/api/fields/{field_id}')
-def update_field(field_id:int,data:FieldIn,db:Session=Depends(get_db)):
+def update_field(field_id:int,data:FieldIn,request:Request,db:Session=Depends(get_db)):
+    from .checks import require_confirmation
     obj = db.get(Field,field_id)
     if obj is None:
         raise HTTPException(404,'Parsel bulunamadı')
+    if data.area_decare!=obj.area_decare:require_confirmation(request,field_area_warnings(data.area_decare))
     # Yalnızca kod gerçekten değiştiyse kontrol et; eski mükerrer kayıtlar düzenlenebilsin.
     if parcel_code_key(data.code) != parcel_code_key(obj.code or ''):
         ensure_parcel_code_free(db,data.code,exclude_id=obj.id)
@@ -533,9 +575,18 @@ def add_season(data:SeasonIn,db:Session=Depends(get_db)):
 def get_seasons(db:Session=Depends(get_db)):
     return [as_dict(x) for x in db.scalars(select(CropSeason).order_by(CropSeason.year.desc()))]
 
+def ensure_item_free(db,code:str,name:str):
+    # Stok Girişi ekranından hızlı ürün eklemede aynı ürün ikinci kez açılmasın.
+    code_key=parcel_code_key(code);name_key=parcel_code_key(name)
+    for other_code,other_name,other_unit in db.execute(select(Item.code,Item.name,Item.unit)).all():
+        if parcel_code_key(other_code or '')==code_key:
+            raise HTTPException(409,f'Ürün kodu zaten kayıtlı: {other_code} ({other_name}).')
+        if parcel_code_key(other_name or '')==name_key:
+            raise HTTPException(409,f'Bu adla ürün zaten kayıtlı: {other_name} ({other_unit}). Listeden seçin.')
+
 @app.post('/api/items',status_code=201)
 def add_item(data:ItemIn,db:Session=Depends(get_db)):
-    unique(db,Item,'code',data.code)
+    ensure_item_free(db,data.code,data.name)
     obj=Item(**data.model_dump());db.add(obj);db.commit();db.refresh(obj);return as_dict(obj)
 @app.get('/api/items')
 def get_items(db:Session=Depends(get_db)):
@@ -547,7 +598,9 @@ def add_movement(data:MovementIn,db:Session=Depends(get_db)):
     if not db.get(Item,data.item_id):raise HTTPException(404,'Ürün bulunamadı')
     moves=db.scalars(select(StockMovement).where(StockMovement.item_id==data.item_id)).all()
     balance=sum((m.quantity if m.type=='IN' else -m.quantity for m in moves), Decimal('0'))
-    if data.type=='OUT' and Decimal(str(balance or 0)) < data.quantity:raise HTTPException(409,'Yetersiz stok')
+    if data.type=='OUT' and Decimal(str(balance or 0)) < data.quantity:
+        from .checks import tr_kg
+        raise HTTPException(409,f'Stok yetersiz: elde {tr_kg(balance)}, çıkış {tr_kg(data.quantity)}. Stok eksiye düşeceği için kaydedilmedi; önce eksik girişi kontrol edin.')
     if data.reference.strip():
         duplicate=db.scalar(select(StockMovement.id).where(StockMovement.item_id==data.item_id, StockMovement.type==data.type, StockMovement.quantity==data.quantity, StockMovement.movement_date==data.movement_date, StockMovement.reference==data.reference.strip()))
         if duplicate is not None: raise HTTPException(409,'Aynı ürün, tarih, miktar ve belge numarasıyla stok hareketi zaten var. Mükerrer kaydı kontrol edin')

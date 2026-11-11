@@ -467,15 +467,37 @@ def invoices(request:Request,search:str='',kind:str='',firm_id:int|None=None,dat
     if search:rows=[r for r in rows if _norm(search) in _norm(r['invoice_no']+' '+r['firm_name'])]
     return rows
 
+def invoice_warnings(data,db):
+    """Alış fiyatı geçmiş ortalamadan çok farklıysa veya KDV oranı alışılmışın dışındaysa uyar."""
+    from .checks import tr_kg
+    warnings=[]
+    for row in data.lines:
+        if row.vat_rate not in (Decimal(0),Decimal(1),Decimal(8),Decimal(10),Decimal(18),Decimal(20)):
+            warnings.append(f'KDV oranı %{tr_kg(row.vat_rate)} alışılmış oranlardan (%0, 1, 10, 20) farklı.')
+        if data.kind!='purchase' or not row.unit_price:continue
+        lines=db.execute(select(InvoiceLine).join(Invoice,InvoiceLine.invoice_id==Invoice.id).where(
+            Invoice.status=='posted',Invoice.kind=='purchase',InvoiceLine.revision==Invoice.revision,InvoiceLine.item_id==row.item_id)).scalars().all()
+        qty=sum((l.quantity for l in lines),Decimal(0))
+        if not qty:continue
+        average=sum((l.subtotal for l in lines),Decimal(0))/qty
+        if average>0 and (row.unit_price>average*3 or row.unit_price*3<average):
+            item=db.get(Item,row.item_id)
+            warnings.append(f'{item.name if item else "Ürün"} birim fiyatı {tr_kg(row.unit_price)} TL; önceki alışların ortalaması {tr_kg(round(average,2))} TL.')
+    return list(dict.fromkeys(warnings))
+
 @router.post('/invoices',status_code=201)
 def create_invoice(data:InvoiceIn,request:Request,db:Session=Depends(get_db)):
-    need(request,'muhasebe.fatura.create');_lock(db)
+    need(request,'muhasebe.fatura.create')
+    from .checks import require_confirmation
+    require_confirmation(request,invoice_warnings(data,db));_lock(db)
     obj=Invoice(revision=1,status='draft');_invoice_data(obj,data,db);_commit(db)
     return invoice_dict(obj,db)
 
 @router.put('/invoices/{invoice_id}')
 def edit_invoice(invoice_id:int,data:InvoiceIn,request:Request,db:Session=Depends(get_db)):
-    need(request,'muhasebe.fatura.edit');_lock(db);obj=_invoice_or_404(invoice_id,db)
+    need(request,'muhasebe.fatura.edit')
+    from .checks import require_confirmation
+    require_confirmation(request,invoice_warnings(data,db));_lock(db);obj=_invoice_or_404(invoice_id,db)
     if obj.status=='cancelled':raise HTTPException(409,'İptal edilmiş fatura değiştirilemez.')
     posted=obj.status=='posted'
     if posted:_reverse(obj,db)

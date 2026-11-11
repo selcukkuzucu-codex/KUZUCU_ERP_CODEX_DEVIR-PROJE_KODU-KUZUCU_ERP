@@ -2,7 +2,7 @@
 chcp 65001 >nul
 setlocal
 cd /d "%~dp0"
-echo KUZUCU ERP — Windows yerel pilot v0.15
+echo KUZUCU ERP — Windows yerel pilot v0.16
 if not exist gunlukler mkdir gunlukler >nul 2>&1
 if not exist gunlukler (
   echo Günlük klasörü oluşturulamadı. Proje klasörüne yazma izninizi kontrol edin.

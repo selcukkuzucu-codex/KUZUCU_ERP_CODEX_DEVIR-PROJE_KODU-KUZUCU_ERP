@@ -183,7 +183,7 @@ def test_launcher_scripts_use_guarded_helper_without_early_browser_commands():
     windows = (root / 'BASLAT_WINDOWS.bat').read_text(encoding='utf-8')
     for source in (mac, windows):
         assert source.index('--check-existing') < source.index('-m pip install')
-        assert 'v0.15' in source and 'gunlukler' in source and 'requirements.constraints.txt' in source
+        assert 'v0.16' in source and 'gunlukler' in source and 'requirements.constraints.txt' in source
         assert '-m uvicorn' not in source and 'sleep 3' not in source
     assert 'open \'http://' not in mac and 'start "" http://' not in windows
 

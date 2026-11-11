@@ -21,7 +21,7 @@ actor_context: contextvars.ContextVar[str] = contextvars.ContextVar('kuzucu_acto
 
 # Every scope has explicit operation grants; reports use dedicated grants.
 MODULES = {
- 'dashboard':'Genel Bakış', 'tarim.parseller':'Tarım / Parseller', 'tarim.uretim':'Tarım / Üretim Sezonları',
+ 'dashboard':'Ana Sayfa', 'tarim.parseller':'Tarım / Parseller', 'tarim.uretim':'Tarım / Üretim Sezonları',
  'hayvanlar.padok':'Hayvanlar / Gruplar', 'hayvanlar.kart':'Hayvanlar / Kayıtlar',
  'hayvanlar.tartim':'Hayvanlar / Tartımlar', 'hayvanlar.buzagi':'Hayvanlar / Buzağılar',
  'hayvanlar.saglik':'Hayvanlar / Sağlık ve Tedavi',
@@ -200,7 +200,16 @@ def login(data:Credentials,request:Request,db:Session=Depends(get_db)):
 def logout(request:Request,db:Session=Depends(get_db)):
     token=request.cookies.get('kuzucu_session','')
     if token: db.query(LoginSession).filter(LoginSession.token_hash==token_digest(token)).delete();db.commit()
-    r=JSONResponse({'message':'Çıkış yapıldı.'});r.delete_cookie('kuzucu_session',path='/');return r
+    # v0.16: her "Çıkış Yap"ta güvenli yedek. Yedek alınamazsa çıkış yine yapılır, kullanıcı uyarılır.
+    from .backup import backup_db
+    engine=getattr(request.app.state,'db_engine',None)
+    saved=None
+    if engine is not None:
+        try:saved=backup_db(engine,force=True,label='cikis')
+        except Exception:saved=None
+    backup_ok=saved is not None if engine is not None and engine.dialect.name=='sqlite' else None
+    message='Çıkış yapıldı. Yedek alındı.' if backup_ok else 'Çıkış yapıldı.' if backup_ok is None else 'Çıkış yapıldı, ancak yedek alınamadı. Yedek klasörünü ve boş alanı kontrol edin.'
+    r=JSONResponse({'message':message,'backup_ok':backup_ok});r.delete_cookie('kuzucu_session',path='/');return r
 
 @router.get('/me')
 def me(request:Request):
@@ -330,6 +339,7 @@ def permission_for(path:str,method:str):
     if method=='GET' and name=='items':return '|stok.urun.view|stok.hareket.view'
     if method=='GET' and name=='fields':return '|tarim.parseller.view|tarim.uretim.view'
     if name=='breeds':return None # checked against either animal or calf visibility in handler
+    if name=='backups':return None # durum: oturum yeterli; elle yedek: handler yönetici kontrolü yapar
     if name=='reports':return None # fine-grained report check inside handler
     if name=='calves' and len(parts)>2 and parts[2].startswith('exit-report'):
         return '&reports.calves.view&reports.calves.export' if parts[2].endswith('.csv') else 'reports.calves.view'

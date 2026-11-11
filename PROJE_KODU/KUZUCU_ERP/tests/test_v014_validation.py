@@ -107,7 +107,7 @@ def test_duplicate_animal_message_uses_turkish_ear_tag_label(client):
 
 def test_release_version_is_consistent_in_api(client):
     health = client.get('/api/health').json()
-    assert health['status'] == 'ok' and health['version'] == main.APP_VERSION == '0.15.0'
+    assert health['status'] == 'ok' and health['version'] == main.APP_VERSION == '0.16.0'
     assert len(health['instance_id']) == 64
     assert client.get('/openapi.json').json()['info']['version'] == main.APP_VERSION
 

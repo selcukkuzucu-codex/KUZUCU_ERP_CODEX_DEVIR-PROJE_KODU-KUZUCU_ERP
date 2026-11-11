@@ -347,8 +347,11 @@ def list_cases(animal_id: int | None = None, status: str | None = None,
 
 @router.post('/cases', status_code=201)
 def add_case(data: HealthCaseIn, db: Session = Depends(get_db)):
-    if not db.get(Animal, data.animal_id):
+    animal = db.get(Animal, data.animal_id)
+    if not animal:
         raise HTTPException(404, 'Hayvan bulunamadı')
+    if animal.status != 'active':
+        raise HTTPException(409, 'Çıkışı yapılmış hayvana yeni sağlık kaydı açılamaz.')
     payload = _plan_payload(data)
     if data.record_type in {'treatment','vaccination'}:
         repeats = _repeat_matches(db, data.animal_id, data.product_name, payload['start_date'])

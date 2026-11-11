@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 cd "$(dirname "$0")"
-echo 'KUZUCU ERP — Mac yerel pilot v0.15'
+echo 'KUZUCU ERP — Mac yerel pilot v0.16'
 if ! mkdir -p gunlukler 2>/dev/null; then
   echo 'Günlük klasörü oluşturulamadı. Proje klasörüne yazma izninizi kontrol edin.'
   read -r -p 'Kapatmak için Enter: ' _; exit 1

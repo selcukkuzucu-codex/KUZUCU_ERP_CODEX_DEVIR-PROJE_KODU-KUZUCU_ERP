@@ -204,8 +204,12 @@ def validate_unique(db, data, exclude_id=None):
             raise HTTPException(409,f'{label} numarası zaten kayıtlı')
 
 @router.post('',status_code=201)
-def add(data:CalfIn, db:Session=Depends(get_db)):
+def add(data:CalfIn, request:Request, db:Session=Depends(get_db)):
+    from .checks import LIMITS, require_confirmation, tr_kg
     validate_unique(db,data)
+    if data.entry_date>today_local():raise HTTPException(422,'Giriş tarihi ileri bir tarih olamaz.')
+    if data.entry_kg>LIMITS['calf_max_kg']:
+        require_confirmation(request,[f'Buzağı giriş kilosu {tr_kg(data.entry_kg)} kg; buzağı için olağandışı.'])
     obj=Calf(**data.model_dump());db.add(obj);db.commit();db.refresh(obj)
     return calf_dict(obj,db)
 
