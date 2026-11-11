@@ -351,7 +351,7 @@ Mevcut: 26 menü maddesi tek, uzun liste. Öneri (profesyonel ERP'lerdeki gibi a
 | **Hayvanlar** | Hayvanlar · Gruplar · Buzağı Giriş / Çıkış · Sağlık / Tedaviler · Tartımlar · Toplu Hayvan İşlemleri · Toplu Hayvan Çıkışı |
 | **Tarım** | Parseller · Üretim Sezonları |
 | **Stok** | Stok Girişi · Stok Hareketleri · Stok Ürünleri · Uyarılar |
-| **Muhasebe** | Faturalar · Hesaplar / Cariler · Firmalar · Maliyetler |
+| **Muhasebe** | Faturalar · Cariler (birleşik) · Kasa / Banka · Maliyetler |
 | **Personel** | Personel |
 | **Raporlar** | Akıllı Raporlar · Hayvan Çıkış Raporu (yeni) |
 | **Ajanda** | Ajanda / Hatırlatmalar |
@@ -363,4 +363,5 @@ Mevcut: 26 menü maddesi tek, uzun liste. Öneri (profesyonel ERP'lerdeki gibi a
 - [ ] Yetkisi olmayan sayfalar gizlenir; içinde hiç izinli sayfa olmayan ana başlık da gizlenir (sunucu yetki denetimi aynen sürer).
 - [ ] Tablet/telefonda menü bir düğmeyle açılır-kapanır (☰).
 - [ ] Menüde arama kutusu (sayfa adını yazarak bulma) — isteğe bağlı.
-- [ ] Not: "Hesaplar / Cariler" ve "Firmalar / Cariler" iki ayrı sayfa, adları karışıyor. Kullanıcıya sorulacak: birleşsin mi, yoksa adı "Firmalar" mı olsun?
+- [x] **Kullanıcı onayı (11.11.2026):** Yukarıdaki gruplama aynen uygulanacak.
+- [ ] **Kullanıcı kararı (11.11.2026): "Hesaplar / Cariler" ve "Firmalar / Cariler" tek "Cariler" sayfasında birleşecek.** Firma kartı (ad, vergi no, telefon, adres) ve borç-alacak/ödeme-tahsilat hareketleri aynı sayfada; kasa/banka hesap kartları Muhasebe altında kalır. Eski firma ve hesap kayıtları silinmez, eşleştirme tahminle yapılmaz; yetkiler (`firmalar.*`, hesap yetkileri) korunur ve testle doğrulanır.
