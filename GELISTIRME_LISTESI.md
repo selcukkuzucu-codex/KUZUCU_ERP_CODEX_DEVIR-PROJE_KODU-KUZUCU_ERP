@@ -321,3 +321,46 @@ Temel: depodaki ve kullanıcının yüklediği **v0.15.0** paketi (SHA256 aynı)
 
 ### Ayrı bulgu — tarayıcı test aracı buzağı adımında takılıyor (v0.15'te de var)
 - [ ] `tools/ui_smoke.cjs` parsel, kullanıcı, ajanda, stok adımlarını geçiyor; buzağı adımında takılıyor. Test buzağıyı "dün" giriş tarihiyle kaydetmeye çalışıyor ama kayıt bugünün tarihiyle oluşuyor, sonra aynı gün çıkış "çıkış tarihi giriş tarihinden sonra olmalı" ile reddediliyor. Değiştirilmemiş v0.15.0'da da aynı. Tarih kutusunun doldurulması/taslak geri yüklemesi ya da saat dilimi incelenmeli; kullanıcının gerçek buzağı girişinde tarih değişip değişmediği kontrol edilmeli.
+
+## 11 Kasım 2026 — Yeni talepler (v0.16 için; "Son sürümü hazırla" bekleniyor)
+
+### 1. Stok girişinde kayıtlı olmayan ürünü oradan ekleme
+- [ ] Stok Girişi ekranında ürün seçerken aranan ürün yoksa **"+ Yeni Stok Ürünü"** düğmesi.
+- [ ] Ayrı bir pencere açılır: ürün kodu, ürün adı, birim (kg/ton/adet/litre…), sınıf (hammadde/ilaç…), alarm seviyesi.
+- [ ] Kaydet'e basınca pencere kapanır, yeni ürün **otomatik seçilir** ve stok girişine yazılmış tarih/miktar/firma bilgileri **kaybolmadan** işleme devam edilir. İptalde hiçbir şey kaydedilmez.
+- [ ] Yetki: ürün ekleme ayrı yetki (`stok.urun.create`); yetkisi olmayan kullanıcı düğmeyi görmez, sunucu da reddeder.
+- [ ] Aynı ürün kodu/adı tekrar açılmasın (parseldeki gibi harf/boşluk farkı gözetilmeden kontrol).
+- Mevcut durum (v0.15): Stok Girişi yalnızca kayıtlı ürünleri seçtiriyor; yeni ürün için ayrı "Stok Ürünleri" sayfasına gidip dönmek gerekiyor.
+
+### 2. "Genel Bakış" adı "Ana Sayfa" olsun
+- [ ] Menü, sayfa başlığı ("İşletme Genel Bakış"), yetki ekranındaki adı ve testler güncellenecek. Yetki anahtarı (`dashboard`) değişmeyecek; mevcut kullanıcı yetkileri korunur.
+
+### 3. Çıkışı yapılan hayvanların geçmiş raporlarda görünmesi
+- Mevcut durum (v0.15, koddan incelendi): Toplu Hayvan Çıkışı (kesim/ölüm/satış) ayrı bir çıkış tablosuna kaydediliyor, hayvan kaydı silinmiyor. Akıllı Raporlar'da "kesilen hayvanlar" yazıp başlangıç/bitiş tarihi kutularını doldurunca bu kayıtlar listeleniyor. Buzağı çıkışları ise ayrı "Buzağı Çıkış Performans Raporu"nda.
+- [ ] Gerçek kullanımla doğrula: çıkış yapılmış hayvan raporda ve Hayvanlar listesinde ("Çıkışı yapıldı" filtresi) gerçekten görünüyor mu.
+- [ ] Ayrı, sade bir **Hayvan Çıkış Raporu** ekranı: tarih aralığı, çıkış nedeni (kesim/ölüm/satış/hepsi), grup, besi + buzağı birlikte veya ayrı; toplam baş ve toplam kg; Excel/CSV ve yazdırma (rapor yetkisine tabi).
+- [ ] Akıllı Raporlar cümle içindeki tarihleri anlasın: "1 Ekim ile 31 Ekim arasında kesilen hayvanlar", "geçen ay kesilenler", "2026 Ekim".
+- [ ] Hayvan kartında çıkış bilgisi (tarih, neden, gittiği yer, çıkış kg) görünsün; geçmiş tartım/sağlık kayıtları korunur.
+
+### 4. Sol menünün yeniden düzenlenmesi
+Mevcut: 26 menü maddesi tek, uzun liste. Öneri (profesyonel ERP'lerdeki gibi açılır gruplar):
+
+| Ana başlık | Altındaki sayfalar |
+|---|---|
+| **Ana Sayfa** | (tek sayfa) |
+| **Hayvanlar** | Hayvanlar · Gruplar · Buzağı Giriş / Çıkış · Sağlık / Tedaviler · Tartımlar · Toplu Hayvan İşlemleri · Toplu Hayvan Çıkışı |
+| **Tarım** | Parseller · Üretim Sezonları |
+| **Stok** | Stok Girişi · Stok Hareketleri · Stok Ürünleri · Uyarılar |
+| **Muhasebe** | Faturalar · Hesaplar / Cariler · Firmalar · Maliyetler |
+| **Personel** | Personel |
+| **Raporlar** | Akıllı Raporlar · Hayvan Çıkış Raporu (yeni) |
+| **Ajanda** | Ajanda / Hatırlatmalar |
+| **Belgeler** | Fotoğraf / Belge Aktarma · Belge Metni Okuma · Entegrasyonlar |
+| **Yönetim** | Kullanıcılar ve Yetkiler · İşlem Geçmişi |
+
+- [ ] Ana başlığa tıklayınca alt sayfalar açılır/kapanır; açık sayfanın grubu açık ve vurgulu kalır; son açık gruplar hatırlanır.
+- [ ] Her ana başlıkta simge (ikon); yeşil-altın KUZUCU görünümü korunur.
+- [ ] Yetkisi olmayan sayfalar gizlenir; içinde hiç izinli sayfa olmayan ana başlık da gizlenir (sunucu yetki denetimi aynen sürer).
+- [ ] Tablet/telefonda menü bir düğmeyle açılır-kapanır (☰).
+- [ ] Menüde arama kutusu (sayfa adını yazarak bulma) — isteğe bağlı.
+- [ ] Not: "Hesaplar / Cariler" ve "Firmalar / Cariler" iki ayrı sayfa, adları karışıyor. Kullanıcıya sorulacak: birleşsin mi, yoksa adı "Firmalar" mı olsun?
