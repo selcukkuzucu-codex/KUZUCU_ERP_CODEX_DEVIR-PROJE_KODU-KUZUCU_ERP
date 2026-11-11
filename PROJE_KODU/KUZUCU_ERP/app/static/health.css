@@ -32,4 +32,5 @@
 .health-catalog-tags{display:flex;flex-wrap:wrap;gap:7px;max-height:190px;overflow-y:auto}
 .health-catalog-tags button{max-width:100%;overflow-wrap:anywhere;text-align:left}
 .health-repeat-notice{flex-basis:100%;background:#fff1db;border:2px solid #d89e43;padding:13px;border-radius:9px;color:#703c0e;font-weight:650}
+.health-plan-dates{flex-basis:100%;margin:0;padding:8px 10px;background:#eff5ed;border-radius:7px}
 @media(max-width:760px){.health-catalog-columns{grid-template-columns:1fr}}

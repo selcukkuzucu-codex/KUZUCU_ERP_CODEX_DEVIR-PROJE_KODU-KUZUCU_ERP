@@ -1,19 +1,24 @@
-KUZUCU ERP v0.14 — Mac / ön test ve geliştirme
+KUZUCU ERP v0.15.0 — Ön test ve geliştirme
 
-1) KUZUCU ERP çalışıyorsa Terminal'de Control+C ile kapatın.
-2) Mevcut Desktop/KUZUCU_ERP klasörünü KUZUCU_ERP_ESKI yapın, SİLMEYİN.
-3) ZIP'i açıp PROJE_KODU içindeki KUZUCU_ERP klasörünü Masaüstüne çıkarın.
-4) Mevcut Mac kayıtlarınız varsa eski ciftlik.db dosyasını yeni klasöre kopyalayın;
-   daha önce eklediğiniz parsel görselleri için eski data/parcel_images klasörünü de taşıyın.
-5) Terminal'de çalıştırın:
+1) Eski programın Terminal penceresinde Control+C yapıp kapanmasını bekleyin.
+2) Eski KUZUCU_ERP klasörünün tamamını yedekleyin ve koruyun; silmeyin.
+3) ZIP'i açın. PROJE_KODU içindeki KUZUCU_ERP klasörünü Masaüstüne kopyalayın.
+4) Program kapalıyken eski ciftlik.db, data/parcel_images, data/documents ve raporlar
+   klasörlerini yeni klasöre kopyalayın. Eski .venv klasörünü kopyalamayın.
+5) Mac Terminal'de:
    bash "$HOME/Desktop/KUZUCU_ERP/BASLAT_MAC.command"
-6) Chrome: http://127.0.0.1:8000
-7) Mevcut v0.13 veritabanını taşıdıysanız aynı hesapla giriş yapın.
-   Boş veritabanında ilk yönetici hesabınızı oluşturun.
+6) Windows'ta BASLAT_WINDOWS.bat dosyasına çift tıklayın.
+7) Program hazır olunca tarayıcıda http://127.0.0.1:8000 açılır; v0.15 yazmalıdır.
+8) Eski veritabanını taşıdıysanız mevcut kullanıcı adı/parolayla giriş yapın.
+   Boş veritabanında ilk yönetici hesabınızı oluşturun. Hazır parola yoktur.
+9) Önce kayıt sayılarını ve yedeğin oluştuğunu kontrol edin.
 
-Ayrıntılar: MAC_GUNCELLEME_V14.md
-Otomatik yedekler: ~/Documents/KUZUCU_ERP_Yedekler
+Ayrıntılar: MAC_GUNCELLEME_V15.md ve KURULUM_WINDOWS_TR.md
+Değişiklikler: SURUM_NOTLARI_V15.md
+Otomatik SQLite yedekleri: Belgeler/KUZUCU_ERP_Yedekler
+SQLite yedeği görsel ve belge dosyalarını kapsamaz; data klasörünü ayrıca yedekleyin.
 
-Windows verilerini Mac'e aktarmanız gerekmiyor.
-
-iPad'de Codex ile devam etmek için paket kökündeki IPAD_ILE_DEVAM.md dosyasını okuyun.
+Eski mama kilogramları litreye çevrilmez. Eski bilinmeyen grup/fiyat/süt durumu boş kalır.
+Fotoğraf okuma için Tesseract ve dil dosyaları ayrıca gerekir; sonucu kontrol edin.
+Telefon bağlantısı veya internet yayını kurulmaz. iPad/Codex devamı paket kökündeki
+IPAD_ILE_DEVAM.md dosyasındadır. Windows verilerini Mac'e aktarmanız gerekmiyor.

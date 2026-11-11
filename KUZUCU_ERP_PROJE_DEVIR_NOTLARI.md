@@ -1,10 +1,23 @@
 # KUZUCU ERP — Codex Proje Devir Notları
 
-**Güncel devir tarihi:** 06.11.2026 (ilk devir: 05.11.2026)  
-**Son hazırlanan pilot sürüm:** v0.14.0, 06.11.2026  
+**Güncel devir tarihi:** 10.11.2026 (ilk devir: 05.11.2026)  
+**Güncel kaynak sürümü:** v0.15.0; test ve paket durumu `SURUM_DOGRULAMA.md` içinde  
 **Proje:** Tek şirketin tarım, besi sığırcılığı ve kendi yem üretimini yönetmek için web ERP.
 
-## Güncel Codex devri — v0.14.0
+## Güncel Codex devri — v0.15.0
+
+- Kullanıcı **Son sürümü hazırla** talimatını verdi ve 10 Kasım'da yineledi. Birikmiş v0.14 sonrası talepler için kod geliştirildi; birleşik doğrulama ve ZIP sonucu `SURUM_DOGRULAMA.md` içindedir. Bu komut sonraki sürümler için sürekli izin sayılmaz.
+- Güncel kurulum `PROJE_KODU/KUZUCU_ERP/MAC_GUNCELLEME_V15.md`, Windows rehberi ve `SURUM_NOTLARI_V15.md` içindedir. Aşağıdaki v0.14/v0.13 anlatımları **tarihî bağlamdır**; güncel v0.15 modül durumu için kaynak ve testleri okuyun.
+- Kullanıcı adı düzenleme, hedef kullanıcının parolasıyla silme, Türkçe denetim görünümü, yeni parselde atomik görsel kaydı; buzağı Grup No/fiyat/süt dönemi, litre ve kg ayrımıyla toplu tüketim, çoklu küpe çıkışı; süreli sağlık ve güncellenen günlük PDF geliştirildi.
+- Genel bakış sayımları, toplu hayvan işlemleri/çıkışı, Stok Girişi/kalıcı uyarılar/Excel `.xlsx`, fatura-KDV-stok-cari/kasa/banka hareketleri, açıklamalı tahmini maliyet, personel/mesai/izin ve N dönemli ajanda eklendi. Tam maaş bordrosu, maliyet dağıtım motoru ve resmî muhasebe/e-fatura/banka entegrasyonu değildir.
+- Kamera/belge önizlemesi insan kontrolünden sonra mevcut kayda aktarılır. Kapalı küpe rakamları tahmin edilmez; örnek fotoğraflar işletme görüntüleridir ve kaynak/ZIP/GitHub'a katılmaz. Üç özgün fotoğrafta tam TR kimliği otomatik çıkarılamadı (0/3); bir örnekte belirsiz `20013` sayısal adayı bulundu. Sentetik net örnek okuması geçti. Bu örnekler için elle giriş gerekir. Fiziksel telefon bağlantısı ve OCR doğruluğu garantisi verilmez; Tesseract dil dosyaları ek gereksinimdir.
+- SQLite'a eklemeli geçişler vardır; açılış öncesi yedek alınır. `ciftlik.db`, `data/parcel_images`, **`data/documents`**, `raporlar` ve eski klasör ayrı korunmalıdır. SQLite yedeği fotoğraf/belge arşivini kapsamaz. Mac'in gerçek veritabanı bu buluta aktarılmadı.
+- Eski buzağı süt/mama kg verisi litreye çevrilmez. Bilinmeyen fiziksel grup, hayvan başı fiyat ve süt dönemi boş kalır. Eski sağlık onayı/klinik bilgi/arınma tarihleri form sadeleştiği için silinmez, onay uydurulmaz.
+- Mac'teki eski giriş reddinin kök nedeni gerçek veritabanında doğrulanmış değildir; kullanıcı adı ve doğru klasör kontrolü gerekir. Program kapalıyken kullanılabilen yerel parola kurtarma aracı açık operatör onayı ve yedekle çalışır; parolalar sohbetten alınmaz. Yeni başlatıcı doğru klasör sunucusunu tanır, yabancı süreci zorla kapatmaz.
+- iPad tercihi hâlâ Codex'te geliştirmedir. Kaynak ZIP'i hazırlamak veya indirme için GitHub dalı oluşturmak ERP/ortam yayını değildir. Ana GitHub dalı, ortamın yayını veya telefon erişimi kendiliğinden yapılmaz. Son teslim bağlantısını ve gerçek Git durumunu ayrıca kontrol edin.
+
+## Önceki devir — v0.14.0 (tarihî)
+
 
 - Kullanıcı projenin **ön test ve geliştirme** aşamasında olduğunu belirtti ve 6 Kasım'da açıkça son sürümün hazırlanıp indirilmesini istedi. Bu komutla v0.14.0 pilot düzeltme paketi hazırlandı; yeni talepler için yeniden açık sürüm talimatını bekleyin.
 - iPad'deki güncel ihtiyaç **yalnızca Codex'te geliştirmeye devam etmek**. ERP'ye evden bağlantı/özel ağ kurulumu bu çalışmanın kapsamında değil. Aynı hesap ve sohbetle devam veya yeni göreve ZIP aktarımı için `IPAD_ILE_DEVAM.md` ve `CODEXTE_BASLAT.md` okuyun.

@@ -20,7 +20,9 @@ def sample_repo(tmp_path):
 
 def test_download_package_excludes_private_data_and_verifies_sources(tmp_path):
     root, app = sample_repo(tmp_path)
-    for relative in ['ciftlik.db', '.env', 'data/parcel_images/ozel.png', 'raporlar/ozel.pdf',
+    for relative in ['ciftlik.db', '.env', 'data/parcel_images/ozel.png', 'data/documents/ozel.jpg',
+                     'raporlar/ozel.pdf', 'app/static/ozel.jpg', 'app/static/ozel.png',
+                     'app/uploads/ozel.md', 'app/.ozel/bilgi.py',
                      '.venv/private.py', 'app/__pycache__/cached.py', 'app/key.pem', '.git/config']:
         path = app / relative
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -37,6 +39,26 @@ def test_download_package_excludes_private_data_and_verifies_sources(tmp_path):
         assert metadata['version'] == '0.14.0'
         assert metadata['contains_user_database'] is False
     assert hashlib.sha256(Path(result['archive']).read_bytes()).hexdigest() == result['sha256']
+
+
+def test_v015_package_declares_schema_change_and_is_reproducible(tmp_path):
+    root, app = sample_repo(tmp_path)
+    (app / 'app/main.py').write_text("APP_VERSION = '0.15.0'\napp = FastAPI(version=APP_VERSION)\n")
+    logo = app / 'app/static/kuzucu_logo.png'
+    logo.parent.mkdir()
+    logo.write_bytes(b'BRAND')
+    photos = root / 'EKRAN_REFERANSLARI'
+    photos.mkdir()
+    (photos / 'ozel.png').write_bytes(b'BUSINESS_IMAGE')
+    first = builder['build_package'](root, tmp_path / 'first.zip')
+    second = builder['build_package'](root, tmp_path / 'second.zip')
+    assert first['sha256'] == second['sha256']
+    with zipfile.ZipFile(first['archive']) as archive:
+        metadata = json.loads(archive.read('PAKET_BILGILERI.json'))
+        assert metadata['schema_change'] is True
+        assert metadata['contains_business_photos'] is False
+        assert archive.read('PROJE_KODU/KUZUCU_ERP/app/static/kuzucu_logo.png') == b'BRAND'
+        assert all('EKRAN_REFERANSLARI' not in name for name in archive.namelist())
 
 
 def test_download_package_rejects_symlinked_source(tmp_path):

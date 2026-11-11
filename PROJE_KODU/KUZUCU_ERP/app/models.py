@@ -108,6 +108,7 @@ class Reminder(Base):
     notes: Mapped[str] = mapped_column(String(1000), default='')
     category: Mapped[str] = mapped_column(String(24), default='Genel')
     frequency: Mapped[str] = mapped_column(String(16), default='once')
+    interval_count: Mapped[int] = mapped_column(Integer, default=1, server_default='1')
     start_date: Mapped[date] = mapped_column(Date)
     remind_time: Mapped[str] = mapped_column(String(5), default='09:00')
     is_active: Mapped[bool] = mapped_column(default=True)
@@ -131,6 +132,8 @@ class HealthCase(Base):
     veterinarian: Mapped[str] = mapped_column(String(160), default='')
     vet_approved: Mapped[bool] = mapped_column(Boolean, default=False)
     applications_per_day: Mapped[int] = mapped_column(Integer, default=1)
+    # None: önceki tarih/onay akışı; dolu: kullanıcının süreyle oluşturduğu plan.
+    duration_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
     start_date: Mapped[date] = mapped_column(Date)
     planned_end_date: Mapped[date] = mapped_column(Date)
     withdrawal_end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
@@ -199,6 +202,9 @@ class Calf(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     tr_ear_tag: Mapped[str] = mapped_column(String(60), unique=True, index=True)
     farm_ear_tag: Mapped[str | None] = mapped_column(String(60), nullable=True, unique=True)
+    group_no: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    purchase_price_tl: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
+    milk_phase: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     sex: Mapped[str] = mapped_column(String(10))  # male/female
     breed: Mapped[str] = mapped_column(String(80), default='Belirtilmedi')
     birth_date: Mapped[date | None] = mapped_column(Date, nullable=True)
@@ -207,6 +213,7 @@ class Calf(Base):
     planned_days: Mapped[int] = mapped_column(Integer, default=45)
     batch_code: Mapped[str] = mapped_column(String(80), default='', index=True)  # legacy data
     exit_group_no: Mapped[str] = mapped_column(String(80), default='', index=True)
+    exit_group_snapshot: Mapped[str | None] = mapped_column(String(40), nullable=True)
     notes: Mapped[str] = mapped_column(String(1200), default='')
     exit_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     exit_kg: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)
@@ -215,6 +222,7 @@ class Calf(Base):
         CheckConstraint('exit_kg IS NULL OR exit_kg > 0', name='positive_calf_exit_kg'),
         CheckConstraint("sex IN ('male','female')", name='valid_calf_sex'),
         CheckConstraint('planned_days > 0', name='positive_calf_planned_days'),
+        CheckConstraint('purchase_price_tl IS NULL OR purchase_price_tl >= 0', name='nonnegative_calf_price'),
     )
 
 
@@ -224,11 +232,14 @@ class CalfConsumption(Base):
     calf_id: Mapped[int] = mapped_column(ForeignKey('calves.id'), index=True)
     consumed_on: Mapped[date] = mapped_column(Date)
     milk_kg: Mapped[Decimal] = mapped_column(Numeric(12,3), default=0)
+    milk_litres: Mapped[Decimal | None] = mapped_column(Numeric(12,3), nullable=True)
+    group_no_snapshot: Mapped[str | None] = mapped_column(String(40), nullable=True)
     feed_kg: Mapped[Decimal] = mapped_column(Numeric(12,3), default=0)
     notes: Mapped[str] = mapped_column(String(400), default='')
     __table_args__ = (
         UniqueConstraint('calf_id','consumed_on',name='unique_calf_consumption_date'),
         CheckConstraint('milk_kg >= 0',name='positive_calf_milk_kg'),
+        CheckConstraint('milk_litres IS NULL OR milk_litres >= 0', name='nonnegative_calf_milk_litres'),
         CheckConstraint('feed_kg >= 0',name='positive_calf_feed_kg'),
     )
 

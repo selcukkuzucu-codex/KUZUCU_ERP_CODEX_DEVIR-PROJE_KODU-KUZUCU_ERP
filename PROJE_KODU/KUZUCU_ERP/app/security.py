@@ -13,7 +13,7 @@ from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, Uni
 from sqlalchemy.orm import Mapped, Session, mapped_column
 from fastapi import APIRouter, HTTPException, Request, Depends
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from .db import Base, get_db
 from .models import utc_now
 
@@ -22,22 +22,22 @@ actor_context: contextvars.ContextVar[str] = contextvars.ContextVar('kuzucu_acto
 # Every scope has explicit operation grants; reports use dedicated grants.
 MODULES = {
  'dashboard':'Genel Bakış', 'tarim.parseller':'Tarım / Parseller', 'tarim.uretim':'Tarım / Üretim Sezonları',
- 'hayvanlar.padok':'Hayvanlar / Padok', 'hayvanlar.kart':'Hayvanlar / Kayıtlar',
+ 'hayvanlar.padok':'Hayvanlar / Gruplar', 'hayvanlar.kart':'Hayvanlar / Kayıtlar',
  'hayvanlar.tartim':'Hayvanlar / Tartımlar', 'hayvanlar.buzagi':'Hayvanlar / Buzağılar',
  'hayvanlar.saglik':'Hayvanlar / Sağlık ve Tedavi',
  'stok.urun':'Stok / Ürünler', 'stok.hareket':'Stok / Hareketler',
  'firmalar':'Firmalar / Cariler', 'ajanda':'Ajanda / Hatırlatmalar',
  'entegrasyon':'Entegrasyonlar', 'belge':'Fotoğraf / PDF Okuma',
- 'muhasebe.fatura':'Muhasebe / Faturalar (gelecek)',
+ 'muhasebe.fatura':'Muhasebe / Faturalar',
  'muhasebe.finans':'Muhasebe / Finans (gelecek)',
  'hesap.banka':'Hesap / Banka (gelecek)', 'hesap.kasa':'Hesap / Kasa (gelecek)',
- 'hesap.cari':'Hesap / Borç / Alacak (gelecek)', 'personel':'Personel (gelecek)',
+ 'hesap.cari':'Hesap / Borç / Alacak', 'personel':'Personel',
  'reports.summary':'Rapor / İşletme Özeti', 'reports.animals':'Rapor / Hayvanlar',
  'reports.weighings':'Rapor / Tartımlar', 'reports.calves':'Rapor / Buzağı Çıkışı',
  'reports.health':'Rapor / Sağlık', 'reports.stock':'Rapor / Stok',
  'reports.fields':'Rapor / Tarım / Parseller', 'reports.production':'Rapor / Üretim / Verim (gelecek)',
- 'reports.cost':'Rapor / Maliyet (gelecek)', 'reports.finance':'Rapor / Muhasebe (gelecek)',
- 'reports.accounts':'Rapor / Hesap Bilgileri (gelecek)', 'reports.payroll':'Rapor / Maaş (gelecek)',
+ 'reports.cost':'Rapor / Maliyet', 'reports.finance':'Rapor / Muhasebe',
+ 'reports.accounts':'Rapor / Hesap Bilgileri (gelecek)', 'reports.payroll':'Rapor / Personel, Mesai ve İzin',
  'audit':'Kullanıcı İşlem Geçmişi',
 }
 OPERATIONS=('view','create','edit','delete','export')
@@ -123,6 +123,12 @@ router=APIRouter(prefix='/api/auth',tags=['Kullanıcı ve yetkilendirme'])
 class Credentials(BaseModel):
     username:str=Field(min_length=3,max_length=80)
     password:str=Field(min_length=10,max_length=200)
+    @field_validator('username')
+    @classmethod
+    def username_valid(cls,value):
+        value=value.strip().lower()
+        if len(value)<3 or any(ord(c)<32 for c in value):raise ValueError('Geçerli bir kullanıcı adı girin.')
+        return value
 class Bootstrap(Credentials):
     display_name:str=Field(min_length=2,max_length=120)
 class UserIn(Bootstrap):
@@ -131,6 +137,7 @@ class UserIn(Bootstrap):
     is_admin:bool=False
     permissions:list[str]=Field(default_factory=list,max_length=300)
 class UserUpdate(BaseModel):
+    username:str|None=Field(default=None,min_length=3,max_length=80)
     display_name:str=Field(min_length=2,max_length=120)
     department:str=Field(default='',max_length=100)
     is_active:bool=True
@@ -138,11 +145,21 @@ class UserUpdate(BaseModel):
     permissions:list[str]=Field(default_factory=list,max_length=300)
     new_password:str|None=None
 
+class DeleteUserInput(BaseModel):
+    password:str=Field(min_length=1,max_length=200)
+
 def grant_list(perms):
     possible={f'{mod}.{op}' for mod in MODULES for op in OPERATIONS}
     unknown=set(perms)-possible
     if unknown:raise HTTPException(422,'Tanımlanmamış yetki seçildi.')
     return json.dumps(sorted(set(perms)),ensure_ascii=False)
+
+def lock_user_changes(db):
+    # İki yöneticinin aynı anda birbirini kapatması son aktif yöneticiyi kaldıramaz.
+    if db.get_bind().dialect.name=='sqlite':
+        if not db.in_transaction():db.connection().exec_driver_sql('BEGIN IMMEDIATE')
+    else:
+        list(db.scalars(select(User).where(User.is_admin==True,User.is_active==True).with_for_update()))
 
 def cookie_response(result,db,user,req):
     token=secrets.token_urlsafe(42)
@@ -211,6 +228,7 @@ def add_user(data:UserIn,request:Request,db:Session=Depends(get_db)):
 def edit_user(user_id:int,data:UserUpdate,request:Request,db:Session=Depends(get_db)):
     u=current_user(request)
     if not u.is_admin:raise HTTPException(403,'Kullanıcı yönetimi yalnızca yöneticidedir.')
+    lock_user_changes(db)
     obj=db.get(User,user_id)
     if not obj:raise HTTPException(404,'Kullanıcı bulunamadı.')
     if obj.id==u.id and (not data.is_admin or not data.is_active):
@@ -218,18 +236,51 @@ def edit_user(user_id:int,data:UserUpdate,request:Request,db:Session=Depends(get
     if obj.is_admin and (not data.is_admin or not data.is_active):
         count=db.query(User).filter(User.is_admin==True,User.is_active==True).count()
         if count<=1:raise HTTPException(409,'Son aktif yönetici kapatılamaz.')
+    if data.username is not None:
+        username=data.username.strip().lower()
+        if len(username)<3 or any(ord(ch)<32 for ch in username):raise HTTPException(422,'Kullanıcı adı en az 3 karakter olmalı ve kontrol karakteri içermemelidir.')
+        if db.scalar(select(User.id).where(User.username==username,User.id!=obj.id)):
+            raise HTTPException(409,'Kullanıcı adı kullanımda. Başka bir ad seçin.')
+        obj.username=username
     obj.display_name=data.display_name.strip();obj.department=data.department
     obj.is_active=data.is_active;obj.is_admin=data.is_admin;obj.permissions_json=grant_list(data.permissions)
-    if data.new_password:obj.password_hash=password_hash(data.new_password)
+    if data.new_password:
+        if len(data.new_password)>200:raise HTTPException(422,'Şifre en fazla 200 karakter olmalıdır.')
+        obj.password_hash=password_hash(data.new_password)
     if not data.is_active:db.query(LoginSession).filter(LoginSession.user_id==obj.id).delete()
     db.commit();return safe_user(obj)
 
+@router.delete('/users/{user_id}')
+def delete_user(user_id:int,data:DeleteUserInput,request:Request,db:Session=Depends(get_db)):
+    actor=current_user(request)
+    if not actor.is_admin:raise HTTPException(403,'Kullanıcı silme işlemini yalnızca yönetici yapabilir.')
+    lock_user_changes(db)
+    obj=db.get(User,user_id)
+    if obj is None:raise HTTPException(404,'Kullanıcı bulunamadı.')
+    if obj.id==actor.id:raise HTTPException(409,'Giriş yaptığınız hesabı silemezsiniz.')
+    if obj.is_admin and obj.is_active and db.query(User).filter(User.is_admin==True,User.is_active==True).count()<=1:
+        raise HTTPException(409,'Son aktif yönetici silinemez.')
+    if not verify_password(data.password,obj.password_hash):
+        raise HTTPException(403,'Silinecek kullanıcının şifresi hatalı. Kullanıcı silinmedi.')
+    db.query(LoginSession).filter(LoginSession.user_id==obj.id).delete()
+    db.query(FormDraft).filter(FormDraft.user_id==obj.id).delete()
+    from .camera_documents import CapturedDocument
+    for document in db.scalars(select(CapturedDocument).where(CapturedDocument.owner_id==obj.id)):
+        document.owner_id=None
+    db.delete(obj)
+    db.commit()
+    return {'deleted':True,'message':'Kullanıcı silindi. Geçmiş işlem kayıtları korundu.'}
+
 @router.get('/audit')
 def audit(request:Request,limit:int=200,db:Session=Depends(get_db)):
+    from .translations import TABLE_LABELS, ACTION_LABELS, describe_changes
     need(request,'audit.view')
     rows=db.scalars(select(AuditEvent).order_by(AuditEvent.id.desc()).limit(min(max(limit,1),1000)))
     return [{'id':a.id,'when':a.happened_at,'actor':a.actor,'entity':a.table_name,'record_id':a.record_id,
-             'action':a.action,'changes':json.loads(a.changes_json)} for a in rows]
+             'action':a.action,'changes':json.loads(a.changes_json),
+             'entity_label':TABLE_LABELS.get(a.table_name,'Diğer kayıtlar'),
+             'action_label':ACTION_LABELS.get(a.action,'Kayıt işlemi'),
+             'display_changes':describe_changes(json.loads(a.changes_json),MODULES)} for a in rows]
 
 class DraftInput(BaseModel):
     values:dict[str,str|int|float|bool|None]=Field(default_factory=dict,max_length=120)
@@ -259,6 +310,8 @@ def permission_for(path:str,method:str):
     parts=path.strip('/').split('/')
     if len(parts)<2 or parts[0]!='api':return None
     name=parts[1]
+    if name in ('finance','personnel','animal-operations','capture'):return None
+    if path=='/api/calves/resolve-exit-tags':return 'hayvanlar.buzagi.view'
     op='view' if method in ('GET','HEAD') else 'edit' if method in ('PUT','PATCH') else 'delete' if method=='DELETE' else 'create'
     fixed={'dashboard':'dashboard','pens':'hayvanlar.padok','animals':'hayvanlar.kart','fields':'tarim.parseller',
         'seasons':'tarim.uretim','items':'stok.urun','stock':'stok.hareket','stock-movements':'stok.hareket',

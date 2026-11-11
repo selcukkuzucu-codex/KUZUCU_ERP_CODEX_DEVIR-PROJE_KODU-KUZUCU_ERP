@@ -1,10 +1,9 @@
-# KUZUCU ERP v0.14.0 — önce burayı okuyun
+# KUZUCU ERP v0.15.0 — önce burayı okuyun
 
-Bu paket ön test ve geliştirme sürümüdür. Kaynak kodları, testler ve Codex devir belgeleri birlikte verilmiştir. Gerçek işletme veritabanı, kullanıcı şifreleri ve fotoğraf arşivi içermez.
+10 Kasım 2026. Bu paket ön test ve geliştirme sürümüdür; kaynakları, testleri ve Codex devir belgelerini içerir. Gerçek işletme veritabanı, şifre veya fotoğraf arşivi içermez.
 
-1. Mac'te çalıştırmak için ZIP'i açın. `PROJE_KODU` içindeki `KUZUCU_ERP` klasörünü kullanın. Mevcut Mac kayıtlarını koruma adımları bu klasördeki `MAC_GUNCELLEME_V14.md` dosyasındadır.
-2. Codex'te geliştirmeyi sürdürmek için `CODEXTE_BASLAT.md` dosyasını okuyun. Yeni bir Codex görevinde bu paketi ve devir notlarını kullanabilirsiniz; dosyaların GitHub'a gönderildiğini varsaymayın.
-3. iPad'de geliştirme için `IPAD_ILE_DEVAM.md` dosyasındaki Codex adımlarını izleyin. ERP ekranlarına evden erişmek ayrı bir bağlantı kurulumudur; indirme bu bağlantıyı kendiliğinden kurmaz.
-4. Bu paketi indirmek veya çalıştırmak, Codex ortamını ya da ERP'yi internete yayımlamaz.
-
-Değişiklikler uygulama klasöründeki `SURUM_NOTLARI_V14.md` dosyasındadır.
+1. ZIP'i açın. Program `PROJE_KODU/KUZUCU_ERP` klasöründedir. Mac güncellemesi için bu klasördeki **MAC_GUNCELLEME_V15.md**, Windows için **KURULUM_WINDOWS_TR.md** dosyasını okuyun.
+2. Önce eski programı kapatın ve bütün klasörü yedekleyin. `ciftlik.db`, `data/parcel_images`, `data/documents` ve `raporlar` ayrıca korunmalıdır. Yeni sürüm eski SQLite'a alan ve tablo ekler; eski klasöre dosyaları birleştirmeyin.
+3. Değişiklikler **SURUM_NOTLARI_V15.md**, gerçek test kanıtı kökteki **SURUM_DOGRULAMA.md** içindedir. Fiziksel cihaz kabulü ve üretim kurulumu ayrı işlerdir.
+4. Codex'te geliştirmeyi sürdürmek için **CODEXTE_BASLAT.md** ve **IPAD_ILE_DEVAM.md** dosyalarını kullanın. Mevcut kaynaklar varsa eski paketi yeniden uygulamayın.
+5. Bu paketi indirmek veya çalıştırmak ERP'yi/Codex ortamını internete yayımlamaz. Telefonun Mac'e erişimi kurulmaz; fotoğraf okuma için bilgisayarda Tesseract gerekir.

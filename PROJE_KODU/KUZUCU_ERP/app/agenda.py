@@ -4,7 +4,7 @@ from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field as PField, field_validator
-from sqlalchemy import select
+from sqlalchemy import select, inspect, text
 from sqlalchemy.orm import Session
 from .db import get_db
 from .models import Reminder
@@ -19,6 +19,7 @@ class ReminderIn(BaseModel):
     notes: str = PField(default='',max_length=1000)
     category: str = PField(default='Genel')
     frequency: str = PField(default='once')
+    interval_count: int = PField(default=1, ge=1, le=1000, strict=True)
     start_date: date
     remind_time: str = PField(default='09:00',pattern=r'^([01]\d|2[0-3]):[0-5]\d$')
 
@@ -47,22 +48,32 @@ def month_at(start:date,n:int)->date:
     day=min(start.day,calendar.monthrange(year,month)[1])
     return date(year,month,day)
 
+def migrate_v015(engine):
+    """Eski hatırlatmaları aralık 1 olarak koruyan, yeniden çalıştırılabilir geçiş."""
+    schema=inspect(engine)
+    if not schema.has_table('reminders'):
+        return
+    if 'interval_count' not in {column['name'] for column in schema.get_columns('reminders')}:
+        with engine.begin() as connection:
+            connection.execute(text('ALTER TABLE reminders ADD COLUMN interval_count INTEGER NOT NULL DEFAULT 1'))
+
 def next_due_date(row:Reminder)->date|None:
     if not row.is_active: return None
     if row.frequency=='once':
         return None if row.last_completed_date else row.start_date
     earliest=max(row.start_date,row.last_completed_date+timedelta(days=1)) if row.last_completed_date else row.start_date
-    if row.frequency=='daily':
-        return earliest
-    if row.frequency=='weekly':
+    interval=getattr(row,'interval_count',1) or 1
+    if row.frequency in ('daily','weekly'):
+        stride=interval*(7 if row.frequency=='weekly' else 1)
         delta=(earliest-row.start_date).days
-        return row.start_date + timedelta(days=max(0,(delta+6)//7)*7)
+        return row.start_date + timedelta(days=max(0,(delta+stride-1)//stride)*stride)
     if row.frequency=='monthly':
-        months=max(0,(earliest.year-row.start_date.year)*12+(earliest.month-row.start_date.month)-1)
-        result=month_at(row.start_date,months)
+        elapsed=max(0,(earliest.year-row.start_date.year)*12+earliest.month-row.start_date.month)
+        periods=elapsed//interval
+        result=month_at(row.start_date,periods*interval)
         while result<earliest:
-            months+=1
-            result=month_at(row.start_date,months)
+            periods+=1
+            result=month_at(row.start_date,periods*interval)
         return result
     return None
 
@@ -73,7 +84,7 @@ def serialize(row:Reminder,now:datetime|None=None):
     due=bool(next_dt and next_dt<=now)
     status='paused' if not row.is_active else ('completed' if row.frequency=='once' and row.last_completed_date else ('due' if due else 'upcoming'))
     return {'id':row.id,'title':row.title,'notes':row.notes,'category':row.category,
-            'frequency':row.frequency,'start_date':row.start_date.isoformat(),
+            'frequency':row.frequency,'interval_count':getattr(row,'interval_count',1) or 1,'start_date':row.start_date.isoformat(),
             'remind_time':row.remind_time,'is_active':row.is_active,
             'last_completed_date':row.last_completed_date.isoformat() if row.last_completed_date else None,
             'next_due_date':next_date.isoformat() if next_date else None,
@@ -104,10 +115,10 @@ def create_reminder(data:ReminderIn,db:Session=Depends(get_db)):
 @router.put('/{reminder_id}')
 def edit_reminder(reminder_id:int,data:ReminderIn,db:Session=Depends(get_db)):
     row=fetch_or_404(db,reminder_id)
-    previous=(row.start_date,row.frequency,row.remind_time)
+    previous=(row.start_date,row.frequency,row.remind_time,row.interval_count)
     for k,v in data.model_dump().items():setattr(row,k,v)
     # Bir hatırlatmanın programı değişirse yeni zaman çizelgesi başlasın.
-    if previous!=(data.start_date,data.frequency,data.remind_time):row.last_completed_date=None
+    if previous!=(data.start_date,data.frequency,data.remind_time,data.interval_count):row.last_completed_date=None
     db.commit();db.refresh(row)
     return serialize(row)
 
@@ -119,6 +130,7 @@ def complete_reminder(reminder_id:int,db:Session=Depends(get_db)):
     today=datetime.now(LOCAL_TZ).date()
     if row.last_completed_date==today: raise HTTPException(409,'Bu hatırlatma bugün tamamlandı')
     if row.start_date>today: raise HTTPException(409,'Başlangıç tarihi henüz gelmedi')
+    if next_due_date(row)>today: raise HTTPException(409,'Sıradaki hatırlatma tarihi henüz gelmedi')
     row.last_completed_date=today
     db.commit();db.refresh(row)
     return serialize(row)

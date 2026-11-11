@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 import zipfile
 
+RELEASE_TIME = (2026, 11, 10, 0, 0, 0)
+
 
 def application_version(app_dir):
     tree = ast.parse((app_dir / 'app/main.py').read_text(encoding='utf-8'))
@@ -24,11 +26,13 @@ def build_package(repo, output):
     app_dir = repo / 'PROJE_KODU/KUZUCU_ERP'
     version = application_version(app_dir)
     files = {}
-    extensions = {'.py', '.html', '.css', '.js', '.cjs', '.mjs', '.png', '.csv', '.md'}
-    excluded_dirs = {'__pycache__', '.pytest_cache', '.git', 'node_modules', '.venv'}
+    extensions = {'.py', '.html', '.css', '.js', '.cjs', '.mjs', '.csv', '.md'}
+    excluded_dirs = {'__pycache__', '.pytest_cache', '.git', 'node_modules', '.venv',
+                     'data', 'uploads', 'documents', 'parcel_images', 'raporlar', 'reports', 'logs', 'gunlukler'}
 
     def include(path):
-        if path.is_symlink():
+        parents = path.relative_to(repo).parts
+        if any(repo.joinpath(*parents[:index]).is_symlink() for index in range(1, len(parents) + 1)):
             raise ValueError('Paket kaynağında sembolik bağlantı desteklenmiyor: ' + str(path))
         relative = path.relative_to(repo).as_posix()
         if relative in files:
@@ -37,19 +41,25 @@ def build_package(repo, output):
 
     for directory in ('app', 'tests', 'templates', 'tools'):
         for path in sorted((app_dir / directory).rglob('*')):
-            if path.is_file() and path.suffix.lower() in extensions and not excluded_dirs.intersection(path.relative_to(app_dir).parts):
+            parts = path.relative_to(app_dir).parts
+            if path.is_file() and path.suffix.lower() in extensions and not excluded_dirs.intersection(parts) and not any(part.startswith('.') for part in parts):
                 include(path)
+    # İşletme fotoğrafları ve ekran görüntüleri kaynak sayılmaz. Yalnızca uygulama amblemi eklenir.
+    logo = app_dir / 'app/static/kuzucu_logo.png'
+    if logo.is_file():
+        include(logo)
     names = {'pytest.ini', 'requirements.txt', 'requirements.constraints.txt', 'YENI_SURUM_KURULUM.txt'}
     for path in sorted(app_dir.iterdir()):
-        if path.is_file() and (path.name in names or path.suffix.lower() in {'.md', '.bat', '.command'}):
+        if path.is_file() and not path.name.startswith('.') and (path.name in names or path.suffix.lower() in {'.md', '.bat', '.command'}):
             include(path)
     for path in sorted(repo.glob('*.md')):
-        include(path)
-    for path in sorted((repo / 'EKRAN_REFERANSLARI').glob('*.png')):
-        include(path)
-
+        if not path.name.startswith('.'):
+            include(path)
     metadata = {'version': version, 'stage': 'ön test ve geliştirme',
-                'contains_user_database': False, 'schema_change': False,
+                'release_date': '2026-11-10',
+                'contains_user_database': False, 'contains_business_photos': False,
+                'schema_change': tuple(int(part) for part in version.split('.')[:2]) >= (0, 15),
+                'migration': 'Mevcut SQLite kayıtlarını koruyan eklemeli geçişler; açılış öncesi yedek.',
                 'source_file_count': len(files)}
     files['PAKET_BILGILERI.json'] = (json.dumps(metadata, ensure_ascii=False, indent=2) + '\n').encode()
     manifest = ''.join(f'{hashlib.sha256(data).hexdigest()}  {name}\n' for name, data in sorted(files.items()))
@@ -58,7 +68,7 @@ def build_package(repo, output):
     temporary = output.with_name(output.name + '.part')
     with zipfile.ZipFile(temporary, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
         for name, data in sorted(files.items()):
-            info = zipfile.ZipInfo(name, date_time=(2026, 11, 6, 0, 0, 0))
+            info = zipfile.ZipInfo(name, date_time=RELEASE_TIME)
             info.compress_type = zipfile.ZIP_DEFLATED
             info.external_attr = (0o100755 if name.endswith(('.command', '.bat')) else 0o100644) << 16
             archive.writestr(info, data)

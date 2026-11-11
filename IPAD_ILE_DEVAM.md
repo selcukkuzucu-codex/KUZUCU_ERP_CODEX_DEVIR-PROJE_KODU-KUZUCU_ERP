@@ -6,8 +6,8 @@
 
 1. iPad'de Safari'yi açın ve şu an kullandığınız Codex hizmetine **aynı hesap ve çalışma alanıyla** giriş yapın.
 2. Erişiminiz varsa bu sohbeti açın; yeni taleplerinizi burada yazın. Kullanılabilir oturum/ortam durumunu Codex yeniden kontrol etsin.
-3. Yeni bir görev açmanız gerekiyorsa indirdiğiniz v0.14.0 ZIP'ini iPad'in **Dosyalar** uygulamasında saklayın ve yeni göreve ekleyin. `CODEXTE_BASLAT.md` içindeki başlangıç mesajını kullanın.
-4. Bu görevdeki dosyalar henüz GitHub'a gönderilmedi. Yeni görevde kaynakların bulunduğunu kontrol etmeden geliştirmeye başlamayın. Aynı kaynakta iki cihazdan eşzamanlı, birbiriyle çakışan görevler başlatmayın.
+3. Yeni bir görev açmanız gerekiyorsa indirdiğiniz v0.15.0 ZIP'ini iPad'in **Dosyalar** uygulamasında saklayın ve yeni göreve ekleyin. `CODEXTE_BASLAT.md` içindeki başlangıç mesajını kullanın.
+4. İndirme için hazırlanmış GitHub dalı ile geliştirme kaynaklarının durumunu ayrı kontrol edin; ana dalın güncellendiğini varsaymayın. Yeni görevde kaynakların bulunduğunu kontrol etmeden geliştirmeye başlamayın. Aynı kaynakta iki cihazdan eşzamanlı, birbiriyle çakışan görevler başlatmayın.
 
 Codex'in Python uygulamasını iPad'e kurmanız gerekmez; geliştirme komutlarını bulut ortamındaki Codex çalıştırır. Aynı sohbeti açmak, durmuş bulut işlemlerinin yeniden başladığı anlamına gelmez.
 

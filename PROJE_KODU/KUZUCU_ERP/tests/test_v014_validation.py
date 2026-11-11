@@ -34,12 +34,12 @@ def client(tmp_path, monkeypatch):
     ('/api/fields', {'code': 'P-01', 'name': 'Deneme', 'area_decare': '0'}, 'Alan (dekar)', 'area_decare'),
     ('/api/fields', {'code': '', 'name': 'Deneme', 'area_decare': '12.5'}, 'Kod', 'code'),
     ('/api/fields', {'code': 'P-01', 'name': 'Deneme', 'area_decare': '12.5', 'ada_no': '1' * 41}, 'Ada No', 'ada_no'),
-    ('/api/pens', {'code': 'P-01', 'capacity': 0}, 'Padok kapasitesi', 'capacity'),
-    ('/api/seasons', {'field_id': 1, 'year': 1999, 'crop': 'Buğday'}, 'Üretim yılı', 'year'),
-    ('/api/animals', {'ear_tag': 'TR-01', 'pen_id': 1, 'arrival_date': '2026-11-06', 'entry_weight_kg': 0}, 'Giriş kilosu', 'entry_weight_kg'),
-    ('/api/receiving/weighings', {'supplier_tax_id': '1234567890', 'item_id': 1, 'weigh_ticket_no': 'F-01', 'gross_kg': 0, 'tare_kg': 0}, 'Brüt kilo', 'gross_kg'),
+    ('/api/pens', {'code': 'P-01', 'capacity': 0}, 'Grup kapasitesi', 'capacity'),
+    ('/api/seasons', {'field_id': 1, 'year': 1999, 'crop': 'Buğday'}, 'Yıl', 'year'),
+    ('/api/animals', {'ear_tag': 'TR-01', 'pen_id': 1, 'arrival_date': '2026-11-06', 'entry_weight_kg': 0}, 'Giriş ağırlığı (kg)', 'entry_weight_kg'),
+    ('/api/receiving/weighings', {'supplier_tax_id': '1234567890', 'item_id': 1, 'weigh_ticket_no': 'F-01', 'gross_kg': 0, 'tare_kg': 0}, 'Brüt ağırlık (kg)', 'gross_kg'),
     ('/api/reports/query', {'query': 'a'}, 'Rapor isteği', 'query'),
-    ('/api/calves/bulk-exit', {'exit_date': '2026-11-06', 'entries': [{'calf_id': 1, 'exit_kg': -1}]}, 'Çıkış kilosu', 'exit_kg'),
+    ('/api/calves/bulk-exit', {'exit_date': '2026-11-06', 'entries': [{'calf_id': 1, 'exit_kg': -1}]}, 'Çıkış ağırlığı (kg)', 'exit_kg'),
 ])
 def test_invalid_inputs_show_turkish_field_labels(client, endpoint, payload, label, technical_name):
     result = client.post(endpoint, json=payload)
@@ -81,7 +81,7 @@ def test_malformed_body_has_a_safe_turkish_fallback(client):
 
 @pytest.mark.parametrize('endpoint,payload,label', [
     ('/api/fields', {'code': 'P-01', 'name': 'Deneme', 'area_decare': '12.5'}, 'Parsel kodu'),
-    ('/api/pens', {'code': 'P-01', 'capacity': 10}, 'Padok kodu'),
+    ('/api/pens', {'code': 'P-01', 'capacity': 10}, 'Grup No'),
     ('/api/items', {'code': 'ARPA', 'name': 'Arpa', 'unit': 'kg'}, 'Ürün kodu'),
     ('/api/firms', {'name': 'Deneme Firması', 'tax_no': '1234567890'}, 'Vergi numarası'),
 ])
@@ -106,8 +106,10 @@ def test_duplicate_animal_message_uses_turkish_ear_tag_label(client):
 
 
 def test_release_version_is_consistent_in_api(client):
-    assert client.get('/api/health').json() == {'status': 'ok', 'version': '0.14.0'}
-    assert client.get('/openapi.json').json()['info']['version'] == '0.14.0'
+    health = client.get('/api/health').json()
+    assert health['status'] == 'ok' and health['version'] == main.APP_VERSION == '0.15.0'
+    assert len(health['instance_id']) == 64
+    assert client.get('/openapi.json').json()['info']['version'] == main.APP_VERSION
 
 
 def test_invalid_stock_direction_uses_visible_turkish_choices(client):

@@ -1,33 +1,38 @@
-# KUZUCU ERP — Windows yerel pilot v0.14.0
+# KUZUCU ERP — Windows yerel pilot v0.15.0
 
-Bu yazılım ön test ve geliştirme sürümüdür. Kullanıcı girişi, bölüm/rapor yetkileri, işlem geçmişi ve yerel SQLite yedeği vardır. Bulut sunucu, cihazlar arası veri eşitleme ve üretim güvenliği kurulmuş sayılmaz. Güncel değişiklikler `SURUM_NOTLARI_V14.md` dosyasındadır.
+Ön test ve geliştirme sürümü. Değişiklikler `SURUM_NOTLARI_V15.md` dosyasındadır. Yeni sürüm mevcut SQLite'a alan ve tablolar ekler; geçiş öncesinde kayıtları koruyun.
 
-## Açılış (Windows 10/11)
+## Güncelleme / ilk açılış
 
-1. ZIP dosyasını indirin, dosyaya sağ tıklayıp **Tümünü Ayıkla** deyin. `PROJE_KODU` içindeki `KUZUCU_ERP` klasörünü ağ sürücüsü yerine örneğin `C:\KUZUCU_ERP` konumuna alın. Eski klasörün üzerine birleştirmeyin; program kapalıyken eski klasörün tamamını yedekleyin ve koruyun.
-2. Bilgisayarınızda **Python 3.11 veya 3.12** kurulu değilse https://www.python.org/downloads/windows/ adresinden yükleyin. Kurulumda **Add Python to PATH** kutusunu işaretleyin.
-3. Klasörde `BASLAT_WINDOWS.bat` dosyasına çift tıklayın. Python bağımlılıkları `requirements.txt` ve test edilen sürümleri koruyan `requirements.constraints.txt` kullanılarak kurulur. İlk seferde internet gerekir.
-4. Tarayıcıda http://127.0.0.1:8000 açılır. Açılmazsa adresi kendiniz yazın. Siyah komut penceresini **kapatmayın**; kapandığında pilot durur.
-5. Yeni kurulum boş SQLite veritabanı ile açılır; ilk yönetici hesabınızı oluşturun. Önceki v0.13 DB'sini program kapalıyken yedekleyip taşıdıysanız aynı hesap ve kayıtlar korunur. Parsel görselleri için `data/parcel_images`, raporlar için `raporlar` klasörünü de ayrıca koruyun.
+1. Eski programın açık komut penceresinde **Control + C** yapıp kapanmasını bekleyin. Tarayıcıyı kapatmak yeterli değildir.
+2. Mevcut `KUZUCU_ERP` klasörünün tamamını ayrı bir yere kopyalayın. Eski klasörü ve `Belgeler\KUZUCU_ERP_Yedekler` içindeki yedekleri silmeyin.
+3. Yeni ZIP'e sağ tıklayıp **Tümünü Ayıkla** deyin. `PROJE_KODU` içindeki `KUZUCU_ERP` klasörünü örneğin `C:\KUZUCU_ERP` içine alın. Eski klasörle birleştirmeyin; ağ/eşitleme sürücüsünden çalıştırmayın.
+4. Kayıtlarınızı sürdürmek için program kapalıyken eski `ciftlik.db`, `data/parcel_images`, `data/documents` ve `raporlar` klasörlerini yeni klasöre kopyalayın. `.venv` klasörünü kopyalamayın. Özel yol ayarlarınız varsa aynı veritabanı/görsel/belge yollarını koruyun.
+5. Python 3.11–3.13 yoksa https://www.python.org/downloads/windows/ adresinden yükleyin; kurulumdaki Python'ı komut yoluna ekleme seçeneğini işaretleyin.
+6. `BASLAT_WINDOWS.bat` dosyasına çift tıklayın. İlk kurulumda internet gerekir. Gereksinimler, test edilen sürümleri koruyan `requirements.constraints.txt` ile kurulur.
+7. Program hazır olunca tarayıcıda `http://127.0.0.1:8000` açılır. Komut penceresini açık bırakın. Ekranda **v0.15** yazmalıdır; gerekirse **Control + Shift + R** ile yenileyin.
+8. Önceki veritabanını taşıdıysanız mevcut hesabınızla giriş yapın. Boş kurulumda ilk yönetici hesabınızı oluşturun; hazır parola yoktur. Önce kayıt sayıları ve açılış yedeğini kontrol edin.
 
-## Yerel veri yedeği (yalnızca pilot SQLite)
+8000 bağlantı noktası başka bir uygulamadaysa süreç zorla kapatılmaz. Eski KUZUCU ERP penceresini Control + C ile durdurup tekrar deneyin. Eski klasörünüzü ve yedeğinizi koruyun; yeni verilerin üstüne eski yedek yazmayın.
 
-`YEDEK_AL_WINDOWS.bat` dosyasına çift tıklayın. Dosya `Belgeler\KUZUCU_ERP_Yedekler` içine SQLite güvenli yedekleme API'si ile kaydedilir; bütünlük kontrolü yapılır.
+## Yedek ve yerel parola kurtarma
 
-**Bu işlem bulut yedeği değildir.** Bulut PostgreSQL kurulmadığından şirket verilerinin otomatik sunucu yedeği henüz yapılamaz. Gerçek Windows otomatik bulut yedeği için ayrı güvenli indirilebilir yedek uç noktası, kimlik doğrulama, şifreleme ve Windows Görev Zamanlayıcı kurulumu gerekecektir. Yerel pilotun yedeği sadece bu pilot veritabanıdır.
+`YEDEK_AL_WINDOWS.bat` mevcut SQLite veritabanını `Belgeler\KUZUCU_ERP_Yedekler` içine bütünlüğü kontrol edilerek yedekler. Açılış/kapanış ve program çalışırken dönemsel yedek de vardır. SQLite yedeği **görsel ve belge dosyalarını içermez**; `data` ve `raporlar` klasörlerini ayrıca yedekleyin. Farklı diske yedek kopyalamak ayrıca gerekir.
 
-## Paket kapsamı
+Parolayı unuttuysanız önce doğru kullanıcı adını ve klasörü kontrol edin; şifreyi sohbete yazmayın. Başka bir yönetici parola değiştirebilir. Gerektiğinde program kapalıyken uygulama klasöründeki komut penceresinde şu yerel aracı çalıştırın:
 
-- Hayvan, Grup No (arayüzde eski padok ifadesi görülebilir), tartım, parsel, ürün, stok kayıtları
-- Kural tabanlı Türkçe rapor sorguları / CSV alma
-- DelPro CSV önizleme (gerçek aktarım yapmaz)
-- Kantar ve fatura miktar eşleştirme API'si (uygulama ekranları henüz tamamlanmadı)
-- SAP mimari planı (SAP bağlantısı yok)
+```bat
+.venv\Scripts\python.exe tools\reset_password.py
+```
 
-**Tamamlanmamış alanlar:** Yapay zekâ model bağlantısı, personel/izin/bordro, gerçek fatura e-postası alma, maliyet merkezi/işletmeler arası transferler ve bulut PostgreSQL altyapısı. Görsel belge önizlemesinde OCR için bilgisayara Tesseract ve Türkçe dil dosyası ayrıca kurulmalıdır; taranmış PDF için OCR yoktur.
+Araç mevcut kullanıcı adını ve yeni parolayı yalnız bu bilgisayarda sorar, işlem öncesi yedek alır; hedef hesap ve veritabanı yolu kontrol edilerek onaylanmalıdır. Yeni/boş veritabanı üretmez.
 
-Bu sürümün otomatik testleri Linux/Python 3.12 üzerinde yapıldı; fiziksel Windows kurulumu bu bulut ortamında denenmedi. iPad'de yalnızca Codex'te geliştirmeye devam etmek için paket kökündeki `IPAD_ILE_DEVAM.md` dosyasını izleyin.
+## Fotoğraf okuma ve kapsam
 
-## Teknik
+Görsel metin/küpe okuma için **Tesseract**, Türkçe ve İngilizce dil dosyaları ayrıca kurulmalıdır. Okunan rakamları belge/fotoğrafla karşılaştırın; kapalı rakam tamamlanmaz, otomatik başarı garantisi yoktur. Seçilebilir metin içeren PDF'ler doğrudan okunabilir; taranmış PDF'yi bu sürümde destekleniyor saymayın.
 
-Python/FastAPI + SQLAlchemy + SQLite (yerel pilot). Tarayıcı arabirimi: `http://127.0.0.1:8000`; API açıklaması `http://127.0.0.1:8000/docs`.
+Yeni stok/fatura/cari, personel/mesai/izin ve fotoğraftan kontrollü aktarım işlevleri pilot kapsamındadır; maaş bordrosu, resmî muhasebe/e-fatura, banka/e-posta/SAP bağlantısı ve tarım-besi maliyet dağıtımı tamamlanmış değildir. Kaynaklar gerçek işletme DB/fotoğraf/şifrelerini içermez.
+
+Fiziksel Windows kurulumu bu Linux bulut ortamında doğrulanmaz. ERP'ye telefon/iPad bağlantısı, internet yayını veya cihazlar arası eşitleme kurulmaz. iPad'de Codex geliştirmesi için kökteki `IPAD_ILE_DEVAM.md` dosyasını okuyun.
+
+Başlatma/kurulumun teknik ayrıntıları uygulama klasöründeki `gunlukler/kurulum.log` ve `gunlukler/baslatma.log` dosyalarında tutulur. Bunlar kaynak ZIP'e alınmaz; destek için paylaşmadan önce dosyada işletme bilgisi bulunup bulunmadığını kontrol edin.

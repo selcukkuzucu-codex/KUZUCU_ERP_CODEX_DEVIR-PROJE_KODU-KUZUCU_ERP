@@ -4,6 +4,9 @@ This module records veterinarian-authorized protocols and observations. It never
 prescribes treatment, determines dose, or changes a protocol automatically.
 """
 import asyncio
+import hashlib
+import json
+import logging
 import os
 import re
 import subprocess
@@ -15,7 +18,7 @@ from zoneinfo import ZoneInfo
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field as PField, field_validator, model_validator
-from sqlalchemy import select, func
+from sqlalchemy import select, func, text, inspect, or_
 from sqlalchemy.orm import Session
 
 from .agenda import next_due_date
@@ -34,6 +37,16 @@ def today_local():
     return datetime.now(TZ).date()
 
 
+def migrate_v015(engine):
+    """Eski sağlık verilerini/onaylarını değiştirmeden süre alanını ekle."""
+    inspector = inspect(engine)
+    if not inspector.has_table('health_cases'):
+        return
+    if 'duration_days' not in {column['name'] for column in inspector.get_columns('health_cases')}:
+        with engine.begin() as connection:
+            connection.execute(text('ALTER TABLE health_cases ADD COLUMN duration_days INTEGER'))
+
+
 class HealthCaseIn(BaseModel):
     animal_id: int = PField(gt=0)
     record_type: str = 'treatment'
@@ -46,8 +59,9 @@ class HealthCaseIn(BaseModel):
     veterinarian: str = PField(default='', max_length=160)
     vet_approved: bool = False
     applications_per_day: int = PField(default=1, ge=1, le=6)
-    start_date: date
-    planned_end_date: date
+    duration_days: int | None = PField(default=None, gt=0, strict=True)
+    start_date: date | None = None
+    planned_end_date: date | None = None
     withdrawal_end_date: date | None = None
     notes: str = PField(default='', max_length=1500)
 
@@ -67,19 +81,42 @@ class HealthCaseIn(BaseModel):
 
     @model_validator(mode='after')
     def validate_plan(self):
-        if self.planned_end_date < self.start_date:
-            raise ValueError('Bitiş tarihi başlangıçtan önce olamaz')
-        if self.withdrawal_end_date and self.withdrawal_end_date < self.start_date:
-            raise ValueError('Arınma süresinin son tarihi başlangıçtan önce olamaz')
-        if self.record_type != 'treatment' and self.applications_per_day != 1:
-            raise ValueError('Aşı/gözlem kayıtlarında günlük uygulama sayısı 1 olmalıdır')
-        if self.record_type != 'treatment' and self.planned_end_date != self.start_date:
-            raise ValueError('Aşı ve gözlem kayıtları bir günlüktür; devam eden işlemleri ayrı kaydedin')
+        if self.duration_days is None:
+            if self.start_date is None or self.planned_end_date is None:
+                raise ValueError('Tedavi süresini gün olarak girin')
+            if self.planned_end_date < self.start_date:
+                raise ValueError('Bitiş tarihi başlangıçtan önce olamaz')
+            if self.withdrawal_end_date and self.withdrawal_end_date < self.start_date:
+                raise ValueError('Arınma süresinin son tarihi başlangıçtan önce olamaz')
+            if self.record_type != 'treatment' and self.applications_per_day != 1:
+                raise ValueError('Aşı/gözlem kayıtlarında günlük uygulama sayısı 1 olmalıdır')
+            if self.record_type != 'treatment' and self.planned_end_date != self.start_date:
+                raise ValueError('Aşı ve gözlem kayıtları bir günlüktür; devam eden işlemleri ayrı kaydedin')
         if self.vet_approved and self.record_type in {'treatment', 'vaccination'} and not self.veterinarian.strip():
             raise ValueError('Onay veren veteriner hekimin adını girin')
-        if not self.vet_approved:
+        if not self.vet_approved and self.duration_days is None:
             self.repeat_review_confirmed = False
         return self
+
+
+def _plan_payload(data: HealthCaseIn, original: HealthCase | None = None):
+    """Süreli yeni formun gizlediği eski tıbbi bilgileri boş değerlerle silme."""
+    payload = data.model_dump()
+    if original is not None:
+        for field in ('symptoms', 'veterinarian', 'vet_approved', 'withdrawal_end_date'):
+            if field not in data.model_fields_set:
+                payload[field] = getattr(original, field)
+        if 'repeat_review_confirmed' not in data.model_fields_set:
+            payload['repeat_review_confirmed'] = (
+                original.repeat_review_confirmed
+                if _name_key(original.product_name) == _name_key(data.product_name) else False)
+    if data.duration_days is not None:
+        payload['start_date'] = original.start_date if original is not None else today_local()
+        try:
+            payload['planned_end_date'] = payload['start_date'] + timedelta(days=data.duration_days - 1)
+        except (OverflowError, ValueError) as exc:
+            raise HTTPException(422, 'Tedavi süresi geçerli tarih sınırlarını aşıyor. Daha kısa bir süre girin.') from exc
+    return payload
 
 
 class HealthLogIn(BaseModel):
@@ -142,12 +179,14 @@ def serialize_case(obj: HealthCase, db: Session | None = None):
     return {
         'id': obj.id, 'animal_id': obj.animal_id,
         'ear_tag': obj.animal.ear_tag if obj.animal else '',
+        'farm_ear_tag': obj.animal.farm_ear_tag if obj.animal else None,
         'pen': obj.animal.pen.code if obj.animal and obj.animal.pen else '',
         'record_type': obj.record_type, 'condition_name': obj.condition_name,
         'symptoms': obj.symptoms, 'product_name': obj.product_name,
         'treatment_name': obj.treatment_name, 'repeat_review_confirmed': obj.repeat_review_confirmed,
         'dosage_text': obj.dosage_text, 'veterinarian': obj.veterinarian,
         'vet_approved': obj.vet_approved, 'applications_per_day': obj.applications_per_day,
+        'duration_days': obj.duration_days,
         'start_date': obj.start_date.isoformat(),
         'planned_end_date': obj.planned_end_date.isoformat(),
         'withdrawal_end_date': obj.withdrawal_end_date.isoformat() if obj.withdrawal_end_date else None,
@@ -300,7 +339,8 @@ def list_cases(animal_id: int | None = None, status: str | None = None,
     if search.strip():
         term = search.strip().casefold()
         rows = [r for r in rows if term in r.condition_name.casefold() or
-                term in r.animal.ear_tag.casefold() or term in r.product_name.casefold()]
+                term in r.animal.ear_tag.casefold() or term in (r.animal.farm_ear_tag or '').casefold()
+                or term in r.product_name.casefold()]
     actors=creator_map(db,'health_cases',[r.id for r in rows])
     return [{**serialize_case(r),'created_by':actors.get(r.id,'Eski kayıt')} for r in rows]
 
@@ -309,15 +349,17 @@ def list_cases(animal_id: int | None = None, status: str | None = None,
 def add_case(data: HealthCaseIn, db: Session = Depends(get_db)):
     if not db.get(Animal, data.animal_id):
         raise HTTPException(404, 'Hayvan bulunamadı')
+    payload = _plan_payload(data)
     if data.record_type in {'treatment','vaccination'}:
-        repeats = _repeat_matches(db, data.animal_id, data.product_name, data.start_date)
-        if repeats and data.vet_approved and not data.repeat_review_confirmed:
+        repeats = _repeat_matches(db, data.animal_id, data.product_name, payload['start_date'])
+        if repeats and (data.duration_days is not None or data.vet_approved) and not data.repeat_review_confirmed:
             _repeat_conflict(repeats)
-    obj = HealthCase(**data.model_dump())
+    obj = HealthCase(**payload)
     db.add(obj)
     _catalog_from_case(db, obj)
     db.commit()
     db.refresh(obj)
+    _refresh_existing_daily_pdf(db)
     return serialize_case(obj)
 
 
@@ -328,23 +370,25 @@ def edit_case(case_id: int, data: HealthCaseIn, db: Session = Depends(get_db)):
         raise HTTPException(409, 'Kapanmış tedavi planı değiştirilemez; yeni kayıt oluşturun')
     if obj.animal_id != data.animal_id:
         raise HTTPException(409, 'Sağlık kaydı başka hayvana taşınamaz')
+    payload = _plan_payload(data, obj)
     logs = db.scalars(select(HealthDailyLog).where(HealthDailyLog.case_id == case_id)).all()
     if logs:
         if any(x.application_no > data.applications_per_day for x in logs):
             raise HTTPException(409, 'Uygulama sayısı kaydedilmiş günlük uygulama numaralarından az olamaz')
         if obj.record_type != data.record_type:
             raise HTTPException(409, 'Uygulaması yapılmış kaydın türü değiştirilemez')
-        if any(not(data.start_date <= x.performed_on <= data.planned_end_date) for x in logs):
-            raise HTTPException(409, 'Yeni tarih aralığı geçmiş uygulama kayıtlarını dışarıda bırakıyor')
+        if any(not(payload['start_date'] <= x.performed_on <= payload['planned_end_date']) for x in logs):
+            raise HTTPException(409, 'Yeni tedavi süresi geçmiş uygulama kayıtlarını dışarıda bırakıyor. Süreyi bu kayıtları kapsayacak şekilde girin.')
     if data.record_type in {'treatment','vaccination'}:
-        repeats = _repeat_matches(db, data.animal_id, data.product_name, data.start_date, exclude_case_id=case_id)
-        if repeats and data.vet_approved and not data.repeat_review_confirmed:
+        repeats = _repeat_matches(db, data.animal_id, data.product_name, payload['start_date'], exclude_case_id=case_id)
+        if repeats and (payload['duration_days'] is not None or payload['vet_approved']) and not payload['repeat_review_confirmed']:
             _repeat_conflict(repeats)
-    for k, v in data.model_dump().items():
+    for k, v in payload.items():
         setattr(obj, k, v)
     _catalog_from_case(db, obj)
     db.commit()
     db.refresh(obj)
+    _refresh_existing_daily_pdf(db)
     return serialize_case(obj)
 
 
@@ -369,27 +413,29 @@ def log_daily_action(case_id: int, data: HealthLogIn, db: Session = Depends(get_
         raise HTTPException(422, 'Gelecek tarihli uygulama yapılmış olarak işaretlenemez')
     if not case.start_date <= data.performed_on <= case.planned_end_date:
         raise HTTPException(409, 'Tarih veteriner planı dışında. Önce planı kontrol edip güncelleyin')
-    if case.record_type != 'observation' and not case.vet_approved:
+    if case.record_type != 'observation' and not case.vet_approved and case.duration_days is None:
         raise HTTPException(409, 'Tedavi/aşı için veteriner onayı kaydedilmeden uygulandı işaretlenemez')
     # Bir vakadaki planlı tekrar dozlar ayrı tedavi sayılmaz; sadece ilk uygulamada kontrol et.
     already_applied_here = db.scalar(select(HealthDailyLog.id).where(HealthDailyLog.case_id == case_id).limit(1))
     if not already_applied_here and case.record_type in {'treatment','vaccination'}:
         repeats = _repeat_matches(db, case.animal_id, case.product_name, data.performed_on,
                                   exclude_case_id=case_id)
-        if repeats and not (case.repeat_review_confirmed or (data.repeat_review_confirmed and case.vet_approved)):
+        reviewed = data.repeat_review_confirmed and (case.vet_approved or case.duration_days is not None)
+        if repeats and not (case.repeat_review_confirmed or reviewed):
             _repeat_conflict(repeats)
-        if repeats and data.repeat_review_confirmed and case.vet_approved:
+        if repeats and reviewed:
             case.repeat_review_confirmed = True
     day_logs = db.scalars(select(HealthDailyLog).where(
         HealthDailyLog.case_id == case_id, HealthDailyLog.performed_on == data.performed_on)).all()
     if len(day_logs) >= case.applications_per_day:
-        raise HTTPException(409, 'Seçilen gün için veteriner planında tanımlı uygulama sayısına ulaşıldı')
+        raise HTTPException(409, 'Seçilen gün için sağlık planında tanımlı uygulama sayısına ulaşıldı')
     used = {x.application_no for x in day_logs}
     next_no = next(i for i in range(1,case.applications_per_day+1) if i not in used)
     log = HealthDailyLog(case_id=case_id, application_no=next_no, **data.model_dump(exclude={'repeat_review_confirmed'}))
     db.add(log)
     db.commit()
     db.refresh(log)
+    _refresh_existing_daily_pdf(db)
     return {'id': log.id, 'case_id': case_id, 'performed_on': log.performed_on.isoformat(), 'application_no': log.application_no}
 
 
@@ -411,12 +457,14 @@ def close_case(case_id: int, data: HealthCloseIn, db: Session = Depends(get_db))
     case.closed_date = data.closed_date
     db.commit()
     db.refresh(case)
+    _refresh_existing_daily_pdf(db)
     return serialize_case(case)
 
 
 def daily_report_data(db: Session, on: date):
     cases = db.scalars(select(HealthCase).where(
-        HealthCase.status == 'active', HealthCase.start_date <= on)
+        HealthCase.status == 'active', HealthCase.start_date <= on,
+        or_(HealthCase.duration_days.is_(None), HealthCase.planned_end_date >= on))
         .order_by(HealthCase.start_date, HealthCase.id)).all()
     ids = [row.id for row in cases]
     day_logs = db.scalars(select(HealthDailyLog).where(
@@ -432,17 +480,19 @@ def daily_report_data(db: Session, on: date):
             schedule_status = 'done'
         elif len(logged.get(row.id,[])):
             schedule_status = 'partially_done'
-        elif row.record_type != 'observation' and not row.vet_approved:
+        elif row.record_type != 'observation' and not row.vet_approved and row.duration_days is None:
             schedule_status = 'awaiting_approval'
         else:
             schedule_status = 'due'
         records.append({
             'case_id': row.id, 'animal_id': row.animal_id,
             'ear_tag': row.animal.ear_tag, 'pen': row.animal.pen.code if row.animal.pen else '',
+            'farm_ear_tag': row.animal.farm_ear_tag,
             'record_type': row.record_type, 'condition_name': row.condition_name,
             'product_name': row.product_name, 'treatment_name': row.treatment_name, 'dosage_text': row.dosage_text,
             'veterinarian': row.veterinarian, 'vet_approved': row.vet_approved,
             'applications_per_day': row.applications_per_day, 'performed_count': len(logged.get(row.id,[])),
+            'duration_days': row.duration_days, 'notes': row.notes,
             'start_date': row.start_date.isoformat(), 'planned_end_date': row.planned_end_date.isoformat(),
             'status': schedule_status,
             'performed_by': ', '.join(v.performed_by for v in logged.get(row.id,[])),
@@ -591,12 +641,13 @@ def make_daily_pdf(db: Session, on: date):
     types = {'treatment':'Tedavi', 'vaccination':'Aşı', 'observation':'Gözlem'}
     rows = [[P(x,heading) for x in ['Küpe / Grup', 'Tür', 'Hastalık / durum', 'Plan / ilaç', 'Tarih aralığı', 'Durum']]]
     for entry in data['cases']:
-        plan = (entry['treatment_name'] + (' / ' if entry['product_name'] else '') + entry['product_name']).strip() or '—'
-        if entry['dosage_text'] and entry['vet_approved']:
+        plan = ' / '.join(value for value in (entry['treatment_name'], entry['product_name']) if value.strip()) or '—'
+        if entry['dosage_text'] and (entry['vet_approved'] or entry['duration_days'] is not None):
             plan += '\n' + entry['dosage_text']
         rows.append([P(entry['ear_tag']+' / '+entry['pen']), P(types.get(entry['record_type'])),
                      P(entry['condition_name']), P(plan),
-                     P(entry['start_date']+' - '+entry['planned_end_date']), P(statuses[entry['status']] + f' ({entry["performed_count"]}/{entry["applications_per_day"]})')])
+                     P(date.fromisoformat(entry['start_date']).strftime('%d.%m.%Y')+' - '+date.fromisoformat(entry['planned_end_date']).strftime('%d.%m.%Y')),
+                     P(statuses.get(entry['status'], 'DURUM BİLGİSİ') + f' ({entry["performed_count"]}/{entry["applications_per_day"]})')])
     if len(rows) == 1:
         rows.append([P('Bugün için açık sağlık planı yok.')]+['']*5)
     t = Table(rows, colWidths=[31*mm,17*mm,34*mm,38*mm,36*mm,27*mm], repeatRows=1, hAlign='LEFT')
@@ -624,7 +675,39 @@ def make_daily_pdf(db: Session, on: date):
         canvas.setFillColor(colors.HexColor('#5d6f63'))
         canvas.drawRightString(A4[0]-13*mm, 8*mm, f'Sayfa {document.page}')
     doc.build(story, onFirstPage=footer, onLaterPages=footer)
+    path.with_suffix('.sha256').write_text(_report_fingerprint(data), encoding='ascii')
     return path
+
+
+def _report_fingerprint(data):
+    """PDF'nin veri anlık görüntüsü; yeni kayıt ve plan/log değişikliği dosyayı yeniler."""
+    encoded = json.dumps(data, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode('utf-8')
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _pdf_matches_data(path: Path, data):
+    try:
+        return path.is_file() and path.with_suffix('.sha256').read_text(encoding='ascii').strip() == _report_fingerprint(data)
+    except (OSError, UnicodeError):
+        return False
+
+
+def _refresh_existing_daily_pdf(db: Session):
+    """Hazırlanmış bugünkü çıktıyı güncel tut; yazıcıyı kendiliğinden çağırma."""
+    day = today_local()
+    record = db.scalar(select(HealthPrintRun).where(HealthPrintRun.report_date == day))
+    if record is None:
+        return
+    settings = db.get(HealthPrintSettings, 1)
+    if settings is not None and not settings.auto_generate and not settings.auto_print:
+        return
+    path = report_dir() / f'{day.isoformat()}_hayvan_sagligi_gunluk.pdf'
+    try:
+        if not _pdf_matches_data(path, daily_report_data(db, day)):
+            record_generation(db, day, make_daily_pdf(db, day))
+    except Exception:
+        # İşletme kaydı zaten kalıcıdır; yazdırma dosyası sorunu kaydı başarısız gibi göstermesin.
+        logging.getLogger('kuzucu.erp').exception('Sağlık kaydı korundu ancak mevcut günlük PDF yenilenemedi.')
 
 
 def record_generation(db: Session, day: date, path: Path):
@@ -654,12 +737,13 @@ def send_to_printer(path: Path, printer_name: str = ''):
     try:
         result = subprocess.run(command, capture_output=True, text=True, timeout=25, check=False)
     except FileNotFoundError as exc:
-        raise RuntimeError('Mac yazdırma komutu (lp) bulunamadı') from exc
+        raise RuntimeError('Yazdırma aracı bulunamadı. İşletim sisteminin yazıcı ayarlarını kontrol edin.') from exc
     except subprocess.TimeoutExpired as exc:
         raise RuntimeError('Yazıcı yanıt vermedi') from exc
     if result.returncode:
-        raise RuntimeError((result.stderr or result.stdout or 'Yazdırma başarısız')[:400].strip())
-    return (result.stdout or 'Yazdırma işi yazıcıya gönderildi').strip()
+        logging.getLogger('kuzucu.erp').warning('Yazdırma sistemi hatası: %s', (result.stderr or result.stdout)[:1000])
+        raise RuntimeError('Yazdırma tamamlanamadı. Yazıcı bağlantısını ve ayarlarını kontrol edin.')
+    return 'Yazdırma işi yazıcıya gönderildi.'
 
 
 @router.post('/print-today')
@@ -670,9 +754,10 @@ def print_today(db: Session = Depends(get_db)):
     try:
         result = send_to_printer(path, settings.printer_name if settings else '')
     except RuntimeError as exc:
-        record.print_error = str(exc)
+        logging.getLogger('kuzucu.erp').warning('Sağlık çıktısı yazdırılamadı: %s', exc)
+        record.print_error = 'Yazdırma tamamlanamadı. Yazıcı bağlantısını ve ayarlarını kontrol edin.'
         db.commit()
-        raise HTTPException(503, str(exc)) from exc
+        raise HTTPException(503, record.print_error) from exc
     record.printed_at = datetime.now(TZ)
     record.print_error = ''
     db.commit()
@@ -685,7 +770,7 @@ def get_print_status(db: Session = Depends(get_db)):
     return {'report_date': record.report_date.isoformat() if record else None,
             'pdf_path': record.pdf_path if record else None,
             'printed_at': record.printed_at.isoformat() if record and record.printed_at else None,
-            'print_error': record.print_error if record else ''}
+            'print_error': 'Yazdırma tamamlanamadı. Yazıcı bağlantısını ve ayarlarını kontrol edin.' if record and record.print_error else ''}
 
 
 def scheduled_daily_tick(engine):
@@ -702,7 +787,8 @@ def scheduled_daily_tick(engine):
             return
         path = report_dir() / f'{day.isoformat()}_hayvan_sagligi_gunluk.pdf'
         record = db.scalar(select(HealthPrintRun).where(HealthPrintRun.report_date == day))
-        if record is None or not path.exists():
+        data = daily_report_data(db, day)
+        if record is None or not _pdf_matches_data(path, data):
             path = make_daily_pdf(db, day)
             record = record_generation(db, day, path)
         if settings is not None and settings.auto_print and record.printed_at is None and not record.print_error:
@@ -710,7 +796,8 @@ def scheduled_daily_tick(engine):
                 send_to_printer(path, settings.printer_name)
                 record.printed_at = datetime.now(TZ)
             except RuntimeError as exc:
-                record.print_error = str(exc)
+                logging.getLogger('kuzucu.erp').warning('Otomatik sağlık çıktısı yazdırılamadı: %s', exc)
+                record.print_error = 'Yazdırma tamamlanamadı. Yazıcı bağlantısını ve ayarlarını kontrol edin.'
             db.commit()
 
 

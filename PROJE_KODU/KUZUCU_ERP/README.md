@@ -1,45 +1,50 @@
-# KUZUCU ERP — Pilot v0.14.0
+# KUZUCU ERP — Pilot v0.15.0
 
-Tarla, besi, stok ve yem altyapısı için ön test ve geliştirme sürümü. Arayüz Türkçedir. Güncel kurulum için `MAC_GUNCELLEME_V14.md`, değişiklikler için `SURUM_NOTLARI_V14.md` okuyun. Paket kökündeki `CODEXTE_BASLAT.md` ve `IPAD_ILE_DEVAM.md` geliştirmeye başka cihazdan devam etme adımlarını içerir.
+Tarım, hayvancılık, stok, fatura/cari ve personel kayıtları için ön test ve geliştirme sürümü. Tüm uygulama metinleri Türkçedir. Güncel kurulum: `MAC_GUNCELLEME_V15.md`, `KURULUM_WINDOWS_TR.md`. Değişiklikler: `SURUM_NOTLARI_V15.md`. Paket kökündeki devir ve doğrulama belgeleriyle birlikte kullanın.
 
-## Kurulum (Python 3.11+)
+## Çalıştırma
+
+Mac'te `BASLAT_MAC.command`, Windows'ta `BASLAT_WINDOWS.bat` başlatıcısını kullanın. Önceki verileri taşımadan önce eski programı kapatıp bütün klasörü yedekleyin. Python 3.11–3.13 gerekir; test edilen bağımlılıklar `requirements.constraints.txt` içindedir.
+
+Geliştirici kurulumu:
 
 ```bash
-cd ciftlik-erp
 python -m venv .venv
-# macOS / Linux:
 source .venv/bin/activate
-# Windows: .venv\\Scripts\\activate
-pip install -r requirements.txt -c requirements.constraints.txt
-uvicorn app.main:app --reload
+python -m pip install -r requirements.txt -c requirements.constraints.txt
+python tools/start_local.py
 ```
 
-Tarayıcıda http://127.0.0.1:8000 açın. API dokümantasyonu: http://127.0.0.1:8000/docs
-
-Veriler varsayılan olarak proje klasöründeki `ciftlik.db` SQLite dosyasında saklanır. Demo veri otomatik oluşturulmaz. PostgreSQL için `DATABASE_URL` ortam değişkenine uygun SQLAlchemy bağlantı adresi verin ve ilgili DB sürücüsünü kurun.
+Windows sanal ortamı `.venv\Scripts\python.exe` yolundadır. Yerel adres `http://127.0.0.1:8000`; veritabanı varsayılan `ciftlik.db` dosyasıdır. `DATABASE_URL` özel yol tanımlıyorsa güncellemede aynı kaynağı koruyun.
 
 ## Mevcut işlevler
-- Padok oluşturma ve kapasite kontrolü
-- Küpe numarası benzersizliği ile hayvan girişi
-- Hayvan bazlı tartım kaydı
-- Tarla/parsel kaydı ve yıllık ürün sezonu
-- Stok ürünü ve giriş-çıkış hareketi; negatif stok engeli
-- Gerçek kayıtlardan yönetici özeti
 
-## Sınırlar — üretim kullanımı için hazır değildir
-- Kullanıcı girişi, bölüm/rapor yetkileri, işlem geçmişi, taslak ve SQLite yedekleme vardır. Bağımsız üretim güvenliği denetimi, tam migration sistemi, maliyet motoru, yem reçete/üretim ve gerçek veri içe aktarımı tamamlanmamıştır.
-- Stok örneğinde ürünün kendi biriminde işlem yapılır; otomatik kg/ton çevrimi yoktur.
-- Aynı anda birden çok operatörün stok çıkışı için satır kilidi ve işlem izolasyonu eklenmelidir.
-- İnternet erişimine açmayın; gerçek kişisel/kurumsal üretim verileri ile kullanmayın.
-- PostgreSQL için uygulamayı çok kullanıcılı canlı ortama çıkarmadan önce şema migration (Alembic), roller, güvenlik, yedekleme ve yük testleri gerekir.
+- Grup, hayvan kartı, tartım; atomik toplu giriş/grup değişimi/tartım ve kesim/ölüm/satış çıkışı.
+- Buzağı giriş/fiyat/süt dönemi, grup bazında mama litre/yem kg, çoklu küpeyle çıkış ve performans.
+- Süreli sağlık planı, gerçek uygulama kaydı, ilaç-tekrar uyarısı ve günlük PDF.
+- Parsel/sezon, yeni parselde görsel seçme ve mevcut görselleri koruma.
+- Stok giriş/çıkış/düzeltme, alarm/kalıcı uyarılar, incelenmiş Excel `.xlsx` aktarımı.
+- Alış/satış faturası, KDV hariç fiyat ve ayrı vergi toplamı; onaylı stok/cari etkisi, düzeltme/iptal izleri; kasa/banka hesap kartı ve ödeme/tahsilat.
+- Faturalı alışlardan ağırlıklı ortalama fiyat ve tahmini stok maliyeti; fiyatı bilinmeyen miktarın ayrımı.
+- Personel, mesai, haftalık/yıllık izin ve işe giriş/çıkış; kullanıcı tarafından girilen izin hakkına göre bakiye.
+- N gün/hafta/takvim ayında bir hatırlatma; bölüm/işlem/rapor yetkileri, oturum doğrulaması, Türkçe denetim geçmişi ve SQLite yedeği.
+- Fotoğrafla küpe adaylarını kontrol etme, belge önizleme ve kontrol edilerek kontrollü fatura kaydı/firma belgesi/mevcut hayvan tartımına aktarma. Görsel okuma için Tesseract ek kurulumu gerekir.
 
-## Test
-```bash
-pytest -q
-```
+## Veri koruma ve sınırlar
 
-## Geliştirme planı
-Paket kökündeki `GELISTIRME_LISTESI.md` güncel doğrulama ve geliştirme işlerini içerir. Aşağıdaki bölümler geçmiş sürümlerin tarihçesidir; eski sürümlerdeki eksik özellik açıklamaları güncel durumun tamamı değildir.
+Kaynak ZIP özel veritabanı, işletme fotoğrafı, parola, rapor çıktısı veya sanal ortam içermez. `ciftlik.db`, `data/parcel_images`, `data/documents`, `raporlar` ve yedek klasörlerinizi ayrı koruyun. SQLite yedeği dosya arşivini kapsamaz. Geçmiş mama kg verisi litreye çevrilmez; bilinmeyen fiyat/grup/süt dönemi tahmin edilmez.
+
+Bu sürüm yerel pilottur. Fiziksel Mac/Windows/telefon kabul testi, bağımsız üretim güvenliği, çok kullanıcılı PostgreSQL geçişi, NAS, tam maliyet dağıtımı, maaş bordrosu ve gerçek SAP/banka/e-posta/e-fatura bağlantıları ayrı çalışmalardır. Bu paket ERP'yi veya Codex ortamını internete açmaz. Telefonun Mac'e erişimi ayrıca kurulmalıdır; `127.0.0.1` yalnız o cihazdır. OCR sonucunu insan kontrolü olmadan kaydetmeyin.
+
+## Test ve geliştirme
+
+Gerçek kayıtları kullanmadan ayrı geçici `DATABASE_URL`, `KUZUCU_BACKUP_DIR`, `KUZUCU_REPORT_DIR` ve `KUZUCU_DOCUMENT_DIR` seçip `python -m pytest -q` çalıştırın. Son birleşik test sonucu kökteki `SURUM_DOGRULAMA.md` içindedir. Playwright/Chromium ile tarayıcı denemeleri isteğe bağlı geliştirme araçlarıdır.
+
+`AGENTS.md`, kökteki `GELISTIRME_LISTESI.md` ve `KUZUCU_ERP_PROJE_DEVIR_NOTLARI.md` çalışma kurallarını taşır. Yeni talepleri listeleyin; yeni açık **Son sürümü hazırla** komutu gelmeden kod/sürüm üretmeyin. iPad'de geliştirme için kökteki `IPAD_ILE_DEVAM.md` dosyasını izleyin.
+
+## Önceki sürümlerin tarihçesi
+
+Aşağıdaki notlar tarihîdir; eski sürüm sınırlamalarını güncel v0.15 durumu gibi yorumlamayın.
 
 ## Sürüm 0.2: DelPro / Excel için CSV içe aktarma önizlemesi
 

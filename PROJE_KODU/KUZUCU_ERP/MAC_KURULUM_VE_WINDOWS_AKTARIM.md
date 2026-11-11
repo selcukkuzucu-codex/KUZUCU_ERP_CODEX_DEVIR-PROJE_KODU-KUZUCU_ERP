@@ -1,3 +1,5 @@
+> **Tarihî v0.5 rehberi:** Güncel v0.15 kurulumu için `MAC_GUNCELLEME_V15.md` ve `KURULUM_WINDOWS_TR.md` dosyalarını kullanın. Kullanıcı Windows verilerini Mac'e taşımayı istemedi; aşağıdaki aktarımı kendiliğinden yapmayın. Bu belgedeki eski eksik özellik açıklamaları güncel durumu göstermez.
+
 # KUZUCU ERP — Mac Kurulum ve Windows Veri Tasima
 
 ## Dikkat: Pilot test surumu
