@@ -432,3 +432,19 @@ Kullanıcı kararı: **A3 (arınma / kesim yasağı koruması) hariç tüm öner
   - Her uyarı tıklanınca ilgili kayda gider; "Doğru, uyarma" ile kapatılabilir (kim kapattığı kaydedilir).
 
 **Önerilen sıra:** G9, G10 ve G6 → v0.16'ya (güvenlik ve veri doğruluğu). G1, G5, G11 → v0.17. G2 → A1 ile birlikte v0.18. G3, G4, G7, G8 → sonraki sürümler.
+
+## 11 Kasım 2026 — Yeni tema (düğmeler, renkler, yerleşim)
+
+Örnek tasarım hazırlandı (kullanıcıya özel bağlantı): https://claude.ai/artifact/VS1UtNYg8beygacuNVoT1q — kullanıcı onayı / düzeltmeleri bekleniyor.
+
+- [ ] Renkler: menü koyu yeşil `#0F2E20`, ana düğme yeşil `#1E5E3F`, vurgu altın `#C99A2E`, sayfa zemini `#F4F6F2`, metin `#17211C`, hata kırmızı `#B42318`. Boğa başlı logo ve KUZUCU / ERP System kimliği korunur.
+- [ ] Yazı tipi: Inter (Türkçe karakter desteği). Programla birlikte dosya olarak gelir; internete bağlı olmadan da çalışır.
+- [ ] Sol menü: koyu yeşil, simgeli ana başlıklar, açılır alt sayfalar, menüde arama, altta "Son yedek" ve sürüm bilgisi. Seçili sayfa altın renkle vurgulanır.
+- [ ] Üst bölüm: sayfa başlığı ve tarih, sık kullanılan hızlı işlem düğmeleri (Tartım Gir, Stok Girişi, Tedavi Kaydı), kullanıcı ve Çıkış Yap.
+- [ ] Kartlar: beyaz, ince çerçeveli, yuvarlak köşeli; Ana Sayfa özet kartları, "Kontrol edilmesi gerekenler" ve "Bugün yapılacaklar" kutuları.
+- [ ] Düğme sistemi: yeşil = ana işlem, altın = yeni kayıt ekleme, beyaz = ikincil, kırmızı = silme (her zaman onay), kaydedilirken pasif. En az 44 px yükseklik (dokunmatik).
+- [ ] Formlar: büyük kutular, sayı kutuları sağa yaslı, altında Türkçe örnek ("12.500,5"); olağandışı değerde sarı çerçeve ve açıklama.
+- [ ] Uyarı biçimleri: yeşil başarılı, sarı olağandışı ("Düzelt" / "Yine de kaydet"), kırmızı kesin hata.
+- [ ] Tablolar: sade başlık, rakamlar sağa yaslı ve hizalı, bölüm etiketleri renkli; dar ekranda tablo kendi kutusunda kayar.
+- [ ] Tablet ve telefonda menü üstte/☰ ile; tüm ekranlar 390 px genişlikte taşmadan çalışır. Tüm ekranlarda erişilebilir renk kontrastı.
+- [ ] Mevcut tüm ekranlar (26 sayfa) yeni temaya geçirilir; işlevler değişmez. Tarayıcı ile her ekranın görüntü kontrolü.
