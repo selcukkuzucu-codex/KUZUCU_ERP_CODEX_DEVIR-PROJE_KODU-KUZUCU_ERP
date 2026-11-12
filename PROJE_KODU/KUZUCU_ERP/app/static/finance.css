@@ -1,0 +1,11 @@
+/* Fatura satırları ve küçük ekranlarda güvenli kaydırma. */
+#finInvoiceLines input,#finInvoiceLines select{min-width:100px;max-width:180px;width:100%}
+#finInvoiceLines table{min-width:720px}
+#finInvoiceLines{min-width:0;max-width:100%;width:100%}
+#finInvoiceLines .scroll{width:100%;max-width:100%}
+#finExcelPreview{max-width:100%;overflow-x:auto}
+#photoDocumentPreview{max-width:100%;min-width:0}
+#reportPhotoArea{margin-top:28px}
+dialog{color:#183d31;border:1px solid #cbd9cf;padding:24px;max-width:calc(100vw - 32px)!important}
+dialog::backdrop{background:#092b2370}
+dialog input{max-width:100%}

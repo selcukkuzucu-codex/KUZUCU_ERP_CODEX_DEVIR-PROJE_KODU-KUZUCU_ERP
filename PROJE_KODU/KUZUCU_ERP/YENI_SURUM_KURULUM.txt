@@ -1,0 +1,26 @@
+KUZUCU ERP v0.16.0 — Ön test ve geliştirme
+
+KOLAY GÜNCELLEME (eski sürüm kuruluysa)
+1) Eski programın penceresinde Control+C yapıp kapanmasını bekleyin.
+2) ZIP'i açın. PROJE_KODU/KUZUCU_ERP klasörüne girin.
+3) Mac: GUNCELLE_MAC.command dosyasına sağ tıklayıp Aç deyin.
+   Windows: GUNCELLE_WINDOWS.bat dosyasına çift tıklayın.
+4) E yazıp Enter'a basın. Önce tam yedek alınır, sonra program dosyaları yenilenir.
+   ciftlik.db, data ve raporlar yerinde kalır. Program kendiliğinden açılır.
+5) Ekranda "Pilot v0.16" yazmalıdır. Aynı kullanıcı adı/parolayla giriş yapın.
+
+İLK KURULUM
+- Mac: KUZUCU_ERP klasörünü Masaüstüne kopyalayın, Terminal'de:
+  bash "$HOME/Desktop/KUZUCU_ERP/BASLAT_MAC.command"
+- Windows: KUZUCU_ERP klasörünü C:\KUZUCU_ERP içine alın, BASLAT_WINDOWS.bat'a çift tıklayın.
+- Boş veritabanında ilk yönetici hesabınızı oluşturun. Hazır parola yoktur.
+
+Ayrıntılar: MAC_GUNCELLEME_V16.md ve KURULUM_WINDOWS_TR.md
+Değişiklikler: SURUM_NOTLARI_V16.md
+Otomatik SQLite yedekleri: Belgeler/KUZUCU_ERP_Yedekler
+SQLite yedeği görsel ve belge dosyalarını kapsamaz; data klasörünü ayrıca yedekleyin.
+
+Eski mama kilogramları litreye çevrilmez. Eski bilinmeyen grup/fiyat/süt durumu boş kalır.
+Fotoğraf okuma için Tesseract ve dil dosyaları ayrıca gerekir; sonucu kontrol edin.
+Telefon bağlantısı veya internet yayını kurulmaz. iPad/Codex devamı paket kökündeki
+IPAD_ILE_DEVAM.md dosyasındadır. Windows verilerini Mac'e aktarmanız gerekmiyor.

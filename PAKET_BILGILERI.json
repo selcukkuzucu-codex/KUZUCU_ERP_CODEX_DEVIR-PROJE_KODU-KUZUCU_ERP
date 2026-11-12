@@ -1,0 +1,10 @@
+{
+  "version": "0.15.0",
+  "stage": "ön test ve geliştirme",
+  "release_date": "2026-11-10",
+  "contains_user_database": false,
+  "contains_business_photos": false,
+  "schema_change": true,
+  "migration": "Mevcut SQLite kayıtlarını koruyan eklemeli geçişler; açılış öncesi yedek.",
+  "source_file_count": 95
+}
